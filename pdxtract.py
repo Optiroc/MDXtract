@@ -102,8 +102,7 @@ class ADPCM(object):
 #-----------------------------------------------------------------------------
 # WAV writer
 
-def wav_write(data, path):
-  sample_rate = 16000
+def wav_write(data, sample_rate, path):
   bits_per_sample = 16
   header = bytearray()
   # ChunkID
@@ -143,19 +142,37 @@ def wav_write(data, path):
 
 def main():
   parser = argparse.ArgumentParser()
+  parser.add_argument("-v", "--verbose", dest="verbose", action="store_true", default=False, help="verbose output")
+  parser.add_argument("-r", "--samplerate", metavar="N", dest="sample_rate", type=int, default=15625, help="wav file sample rate (default: 15625)")
   parser.add_argument("infiles", nargs="*", help="input file(s)")
 
   try:
     arguments = parser.parse_args()
+    if len(arguments.infiles) == 0:
+      parser.print_help()
+      sys.exit(0)
 
+    first = True
     for path in arguments.infiles:
       with open(path, "rb") as infile:
+        if arguments.verbose:
+          if first is False: print()
+          print("File:", path)
+          first = False
+
         basepath = os.path.abspath(os.path.join(os.path.dirname(path), os.path.splitext(os.path.basename(path))[0]))
         pdx = PDX(bytearray(infile.read()))
+
+        files_written = 0
         for index, pcm in enumerate(pdx.pcm_data, 1):
           if pcm is not None:
             outpath = "{}_{:02}.wav".format(basepath, index)
-            wav_write(ADPCM.decode(pcm), outpath)
+            wav_write(ADPCM.decode(pcm), arguments.sample_rate, outpath)
+            if arguments.verbose: print("-", os.path.basename(outpath))
+            files_written += 1
+
+        if arguments.verbose:
+          print("Total Samples:", files_written)
 
   except IOError as err:
     print("{}".format(err))
