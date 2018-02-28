@@ -11,22 +11,26 @@ pdxtract.py extracts 4-bit ADPCM samples from PDX files and converts them to sta
 ## operation
 
 **mdxtract.py**
-
 ```
 mdxtract.py [-h, --help] [-v, --verbose] [infiles ...]
 ```
-
  - Instrument data will be converted and written as `<filename>.syx`
  - In verbose mode some intriguing data will be printed to stdout
 
-
 **pdxtract.py**
-
 ```
 pdxtract.py [-h, --help] [infiles ...]
 ```
-
  - ADPCM data will be converted and written as `<filename>_<n>.wav`
+
+
+## tips & tricks
+
+**voice expressiveness**
+
+The instrument definition stored in an MDX file does not define many of the expressive features commonly used in a lovingly crafted DX synthesizer patch: vibrato, key velocity response and so on. MXDRV used effects in the note streams to apply such expression, rather than implementing them in the instruments.
+
+Fear not! Restoring expressiveness is usually a simple matter of adding key velocity response (KVS) to the operators. Adding KVS to a carrier makes that operator chain respond to key velocity by adjusting the final output volume. Adding KVS to a modulator usually yields a more interesting result since you can then vary the modulation amount with the key velocity – essential for that FM slap bass!
 
 
 ---

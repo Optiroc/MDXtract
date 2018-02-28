@@ -55,37 +55,6 @@ def int_remap(n, r1, r2):
 #-----------------------------------------------------------------------------
 # OPM -> DX7 Voice conversion
 
-# OPM Operator Parameters
-OPMOP = namedtuple("OPMOP", [
-  "TL",    # Total Level                  (7 bits)
-  "AR",    # Attack Rate                  (5 bits)
-  "D1R",   # Decay Rate 1                 (5 bits)
-  "D1L",   # Decay Level 1                (4 bits)
-  "D2R",   # Decay Rate 2                 (5 bits)
-  "RR",    # Release Rate                 (4 bits)
-  "KS",    # Key Scaling                  (2 bits)
-  "MUL",   # Phase Multiply               (4 bits)
-  "DT1",   # Detune 1 (fine)              (3 bits)
-  "DT2",   # Detune 2 (course)            (2 bits)
-  "AME"    # Amp Mod Enable               (1 bits)
-])
-
-# Make OPMVoice from MDX voice definition
-def MDXVoice_to_OPMOP(op, mdxv):
-  return OPMOP(
-    TL  = (mdxv[0x07 + op]) & 0xFF,
-    AR  = (mdxv[0x0B + op]) & 0x1F,
-    D1R = (mdxv[0x0F + op]) & 0x1F,
-    D1L = (mdxv[0x17 + op] >> 4) & 0x0F,
-    D2R = (mdxv[0x13 + op]) & 0x1F,
-    RR  = (mdxv[0x17 + op]) & 0x0F,
-    KS  = (mdxv[0x0B + op] >> 6) & 0x03,
-    MUL = (mdxv[0x03 + op]) & 0x0F,
-    DT1 = (mdxv[0x03 + op] >> 4) & 0x07,
-    DT2 = (mdxv[0x13 + op] >> 6) & 0x03,
-    AME = (mdxv[0x0F + op] >> 7) & 0x01
-  )
-
 # OPM Voice Definition
 OPMVoice = namedtuple("OPMVoice", [
   "name",  # Name
@@ -106,6 +75,37 @@ OPMVoice = namedtuple("OPMVoice", [
   "OPC2"   # Operator C2 Parameters      (6 bytes)
 ])
 
+# OPM Operator Parameters
+OPMOP = namedtuple("OPMOP", [
+  "TL",    # Total Level                  (7 bits)
+  "AR",    # Attack Rate                  (5 bits)
+  "D1R",   # Decay Rate 1                 (5 bits)
+  "D1L",   # Decay Level 1                (4 bits)
+  "D2R",   # Decay Rate 2                 (5 bits)
+  "RR",    # Release Rate                 (4 bits)
+  "KS",    # Key Scaling                  (2 bits)
+  "MUL",   # Phase Multiply               (4 bits)
+  "DT1",   # Detune 1 (fine)              (3 bits)
+  "DT2",   # Detune 2 (course)            (2 bits)
+  "AME"    # Amp Mod Enable               (1 bits)
+])
+
+# Make OPMOP from MDX voice definition
+def MDXVoice_to_OPMOP(op, mdxv):
+  return OPMOP(
+    TL  = (mdxv[0x07 + op]) & 0xFF,
+    AR  = (mdxv[0x0B + op]) & 0x1F,
+    D1R = (mdxv[0x0F + op]) & 0x1F,
+    D1L = (mdxv[0x17 + op] >> 4) & 0x0F,
+    D2R = (mdxv[0x13 + op]) & 0x1F,
+    RR  = (mdxv[0x17 + op]) & 0x0F,
+    KS  = (mdxv[0x0B + op] >> 6) & 0x03,
+    MUL = (mdxv[0x03 + op]) & 0x0F,
+    DT1 = (mdxv[0x03 + op] >> 4) & 0x07,
+    DT2 = (mdxv[0x13 + op] >> 6) & 0x03,
+    AME = (mdxv[0x0F + op] >> 7) & 0x01
+  )
+
 # Make OPMVoice from MDX voice definition
 def MDXVoice_to_OPMVoice(name, mdxv):
   return OPMVoice(
@@ -120,6 +120,37 @@ def MDXVoice_to_OPMVoice(name, mdxv):
     OPC2 = MDXVoice_to_OPMOP(3, mdxv)
   )
 
+
+# DX7 Voice Definition
+DX7Voice = namedtuple("DX7Voice", [
+  "name",  # Name
+  "PR1",   # Pitch EG Rate 1             (7 bits, 0-99)
+  "PR2",   # Pitch EG Rate 2             (7 bits, 0-99)
+  "PR3",   # Pitch EG Rate 3             (7 bits, 0-99)
+  "PR4",   # Pitch EG Rate 4             (7 bits, 0-99)
+  "PL1",   # Pitch EG Level 1            (7 bits, 0-99)
+  "PL2",   # Pitch EG Level 2            (7 bits, 0-99)
+  "PL3",   # Pitch EG Level 3            (7 bits, 0-99)
+  "PL4",   # Pitch EG Level 4            (7 bits, 0-99)
+  "ALG",   # Algorithm                   (5 bits)
+  "OKS",   # Oscillator Key Sync         (1 bit)
+  "FB",    # Feedback Level              (3 bits)
+  "LFS",   # LFO Speed                   (7 bits, 0-99)
+  "LFD",   # LFO Delay                   (7 bits, 0-99)
+  "LPMD",  # LFO Pitch Mod Depth         (7 bits, 0-99)
+  "LAMD",  # LFO Amp Mod Depth           (7 bits, 0-99)
+  "LFKS",  # LFO Key Sync                (1 bit)
+  "LFW",   # LFO Waveform                (3 bits, 0=Triangle, 1=SawDown, 2=SawUp, 3=Square, 4=Sine, 5=SHold)
+  "LPMS",  # LFO Pitch Mod Sensitivity   (3 bits)
+  "TRNP",  # Transpose                   (5 bits, 0-48, 12=C2)
+  "OPEN",  # Operator Enable             (6 bits, bit0=OP6) (not a register on actual hardware)
+  "OP1",   # Operator 1 Parameters
+  "OP2",   # Operator 2 Parameters
+  "OP3",   # Operator 3 Parameters
+  "OP4",   # Operator 4 Parameters
+  "OP5",   # Operator 5 Parameters
+  "OP6"    # Operator 6 Parameters
+])
 
 # DX7 Operator Parameters
 DX7OP = namedtuple("DX7OP", [
@@ -187,37 +218,6 @@ def default_DX7OP():
     DET=7, RS=0,  AMS=0, KVS=0,
     OL=99, M=0,   FC=1,  FF=0
   )
-
-# DX7 Voice Definition
-DX7Voice = namedtuple("DX7Voice", [
-  "name",  # Name
-  "PR1",   # Pitch EG Rate 1             (7 bits, 0-99)
-  "PR2",   # Pitch EG Rate 2             (7 bits, 0-99)
-  "PR3",   # Pitch EG Rate 3             (7 bits, 0-99)
-  "PR4",   # Pitch EG Rate 4             (7 bits, 0-99)
-  "PL1",   # Pitch EG Level 1            (7 bits, 0-99)
-  "PL2",   # Pitch EG Level 2            (7 bits, 0-99)
-  "PL3",   # Pitch EG Level 3            (7 bits, 0-99)
-  "PL4",   # Pitch EG Level 4            (7 bits, 0-99)
-  "ALG",   # Algorithm                   (5 bits)
-  "OKS",   # Oscillator Key Sync         (1 bit)
-  "FB",    # Feedback Level              (3 bits)
-  "LFS",   # LFO Speed                   (7 bits, 0-99)
-  "LFD",   # LFO Delay                   (7 bits, 0-99)
-  "LPMD",  # LFO Pitch Mod Depth         (7 bits, 0-99)
-  "LAMD",  # LFO Amp Mod Depth           (7 bits, 0-99)
-  "LFKS",  # LFO Key Sync                (1 bit)
-  "LFW",   # LFO Waveform                (3 bits, 0=Triangle, 1=SawDown, 2=SawUp, 3=Square, 4=Sine, 5=SHold)
-  "LPMS",  # LFO Pitch Mod Sensitivity   (3 bits)
-  "TRNP",  # Transpose                   (5 bits, 0-48, 12=C2)
-  "OPEN",  # Operator Enable             (6 bits, bit0=OP6)
-  "OP1",   # Operator 1 Parameters
-  "OP2",   # Operator 2 Parameters
-  "OP3",   # Operator 3 Parameters
-  "OP4",   # Operator 4 Parameters
-  "OP5",   # Operator 5 Parameters
-  "OP6"    # Operator 6 Parameters
-])
 
 # Make default ("INIT VOICE") DX7Voice
 def default_DX7Voice():
