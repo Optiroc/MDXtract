@@ -1,0 +1,810 @@
+<HTML>
+
+<style type="text/css">
+
+body {
+  padding: 8px;
+  font-family: "Univers Next Pro", "Univers Next", "Univers", Helvetica, Sans-Serif;
+  font-weight: 300;
+  font-size: 13pt;
+  line-height: 16pt;
+}
+
+h2 {
+  font-size: 18pt;
+  font-weight: 500;
+  line-height: 22pt;
+  -webkit-margin-after: 0;
+}
+
+pre {
+  font-size: 10pt;
+  line-height: 13pt;
+}
+
+b, strong {
+  font-weight: 500;
+}
+
+.info {
+  font-size: 10pt;
+  line-height: 13pt;
+  padding: 8px;
+  margin-bottom: 16px;
+  background-color: #ccc;
+  color: #fff;
+}
+
+</style>
+
+<HEAD>
+<title>FM DX Supplement - Converting between FM Synths; Enharmonic Detuned Frequencies; DX Operators; Spectrum Amplitudes; Modulation Index & Deviation; Bessel Functions & Amplitude calculations; Two or more Operators; FM Bessel Tables - Yala Abdullah</title>
+</HEAD>
+<body>
+
+<div class="info">
+Archived from https://sites.google.com/site/yalaorg/audio-music-synthesis/fmsynth/fmsynthdx, 2018.02.27
+</div>
+
+<A NAME="Top"><H2>FM DX Supplement</H2></A>
+
+<UL>
+  <LI><A HREF="#Conv">Converting between FM synths </A></LI>
+  <LI><A HREF="#Dtun">Enharmonic Detuned Frequencies </A></LI>
+  <LI><A HREF="#DXOps">About DX Operators </A></LI>
+  <LI><A HREF="#MIC">Modulation Index Calculation </A></LI>
+  <LI><A HREF="#MITab">DX Out - Mod Index Table </A> </LI>
+  <LI><A HREF="#Dev">Deviation </A></LI>
+  <LI><A HREF="#Bessel">Bessel Functions </A></LI>
+  <LI><A HREF="#SpecAmp">Spectrum Amplitudes </A></LI>
+  <LI><A HREF="#2Mod">Two or more Modulators </A></LI>
+  <LI><A HREF="#FMTab">FM Bessel Tables </A></LI>
+  <LI><A HREF="#Read">Recommended Reading </A></LI>
+  <LI><A HREF="#Hist">The FM Legend - A Personal History</A></LI>
+</UL>
+
+<HR>
+<H2>Conventions Used</H2>
+<PRE>
+* = multiplication [ 2 * 3 = 6]
+^ = to-the-power-of [ 2 ^ {3} = 8, curly brackets {} show the power]
+PI used is 3.14159265358979 [Circumference of Circle = 2*PI*radius]
+</PRE>
+
+<A NAME="Conv"><H2>Converting between FM synths</H2></A>
+Direct conversion between the different FM synths can be a bit tricky. Below are some conversion tables for the various FM synths. Please note that there are limitations to conversion (eg Conversion from 6-op to 4-op ~or~ from a complex Rate/Level envelope to ADSDR may not be ideal). <br>
+<PRE>
+MODULATION OUTPUT CONVERSION
+Orig :    5   10   15   20   25   30   35   40   45   50   55   60   65   70   75
+X    :    3    6   11   15   19   23   28   33   38   43   48   53   58   63   68
+CX   :   21   32   42   49   54   59   64   69   74   79   84   89   94   99  104
+continued...
+Orig :   80   82   84   86   88   90   91   92   93   94   95   96   97   98   99
+X    :   73   75   77   79   81   83   84   85   86   87   88   89   90   91   92
+CX   :  109  111  113  115  117  119  120  121  122  123  124  125  126  127  127
+
+ENVELOPE PARAMETERS
+Attack (A) ~ Rate (R) Conversion
+DX-7  R:  15  21  27  34  40  47  54  60  67  74  80  85  89  93  96  99
+DX-21 A:   1   3   5   7   9  11  13  15  17  19  21  23  25  27  29  31
+Decay (D) ~ Rate (R) Conversion
+DX-7  R:  10  16  21  27  33  39  45  51  57  63  69  75  81  87  93  99
+DX-21 D:   1   3   5   7   9  11  13  15  17  19  21  23  25  27  29  31
+Sustain (S) ~ Level (L) Conversion
+DX-7  L:  35  39  44  48  53  57  62  66  71  75  80  84  89  93  99
+DX-21 S:   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+Release (R bottom) ~ Rate (R top) Conversion
+DX-7  R:  21  27  32  38  43  49  54  60  65  71  76  82  87  94  99
+DX-21 R:   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+</PRE>
+Certain parameters like Feedback and Frequency are the same (although Frequency may take some fiddling to convert). However, most other parameters are not the same.
+<p>
+<A NAME="Dtun"><H2>Enharmonic Detuned Frequencies</H2></A>
+The frequency of an operator is dependent on 3 parameters (1) the Coarse Frequency, (2) the Fine Frequency, and (3) Detune. So far, we have dealt mainly with the Coarse Frequency which is the main integer ratio of the base frequency (eg M:C = 2:1). We have also looked at Detune and its effects where (a) detuning the Carrier shifts the entire spectrum, and (b) detuning the Modulator changes the separation between the sidebands.
+<p>
+FM synths will have some form of Fine Frequency. The Fine Frequency allows the selection of non-integer multiples of the base frequency. Normally, this would yield something clangorous or enharmonic. This brings another dimension into FM sounds because a new set of overtones are introduced. Typically, this would be used for bell-type or percussion sounds. You can also obtain very unique and strange timbres too (a great source of experimentation).
+<p>
+Specifically for the original DX-7 (and DX-9) range, the Fine Frequency can also be used to obtain "extra" detuning for the operator. Basically the Fine Frequency had a range of 0~99 where each increment increased the Frequency by 1 percent. The table below shows the frequencies which are within 0.05 of a Coarse frequency; achieved by a combination of the CF [Coarse Frequency selected] and FF [Fine Frequency increments].
+<PRE>
+Freq   CF   FF    Freq   CF  FF    Freq   CF  FF    Freq   CF  FF    Freq   CF  FF
+0.505  0.5   1     4.95   3  65    11.97   7  71    18.96  12  58    25.95  15  73
+0.510  0.5   2     4.96   4  24    11.97   9  33    18.98  13  46    25.96  22  18
+0.515  0.5   3     4.98   3  66    11.99  11   9    19.03  11  73    25.99  23  13
+0.520  0.5   4     5.01   3  67    12.04   7  72    19.04  14  36    26.01  17  53
+0.525  0.5   5     5.04   4  26     ----  --  --    19.04  16  19    26.03  19  37
+0.530  0.5   6     5.04   3  68    12.95   7  85    19.04  17  12    26.04  14  86
+0.535  0.5   7     5.05   5   1    12.96   9  44    19.05  15  27    26.04  21  24
+0.540  0.5   8     ----  --  --    12.96   8  62     ----  --  --     ----  --  --
+0.545  0.5   9     5.95   5  19    12.96  12   8    19.95  19   5    26.98  19  42
+0.550  0.5  10     5.96   4  49    12.98  11  18    19.95  15  33    27.02  14  93
+ ----  ---  --     5.97   3  99    13.02   7  86    19.98  18  11    27.03  17  59
+0.950  0.5  90     6.04   4  51    13.04   8  63    20.02  11  82    27.04  16  69
+0.955  0.5  91     6.05   5  21    13.05   9  45    20.02  13  54    27.04  26   4
+0.960  0.5  92     ----  --  --     ----  --  --    20.02  14  43     ----  --  --
+0.965  0.5  93     6.95   5  39    13.95   9  55    20.04  12  67    28.05  17  65
+0.970  0.5  94     6.96   6  16    13.97  11  27     ----  --  --    28.05  15  87
+0.975  0.5  95     6.96   4  74    14.04  12  17    20.96  16  31     ----  --  --
+0.980  0.5  96     7.02   6  17    14.04   9  56    21.01  11  91    28.95  15  93
+0.985  0.5  97     7.04   4  76    14.04  13   8     ----  --  --    28.96  16  81
+0.990  0.5  98     7.05   5  41     ----  --  --    21.96  12  83    28.98  18  61
+0.995  0.5  99     ----  --  --    14.95  13  15    21.96  18  22    28.98  21  38
+1.01    1    1     7.95   5  59    14.96  11  36    21.97  13  69    28.98  23  26
+1.02    1    2     7.96   4  99    14.96   8  87    21.98  14  57    29.04  24  21
+1.03    1    3     7.98   6  33    14.98  14   7    22.04  19  16    29.04  22  32
+1.04    1    4     7.98   7  14    15.03   9  67    22.05  15  47     ----  --  --
+1.05    1    5     8.04   6  34    15.04   8  88    22.05  21   5    29.96  28   7
+ ----  ---  --     8.05   5  61     ----  --  --     ----  --  --    29.97  27  11
+1.95    1   95     8.05   7  15    15.95  11  45    22.95  15  53    30.02  19  58
+1.96    1   96     ----  --  --    15.96  12  33    22.95  17  35    30.03  21  43
+1.97    1   97     8.95   5  79    15.96  14  14    22.96  14  64     ----  --  --
+1.98    1   98     8.96   7  28    15.99  13  23    22.99  19  21    30.96  18  72
+1.99    1   99     8.96   8  12    16.02   9  78    23.01  13  77    30.96  24  29
+2.02    2    1     9.03   7  29    16.05  15   7    23.04  12  92    30.97  19  63
+2.04    2    2     9.04   8  13     ----  --  --    23.04  16  44    31.02  22  41
+ ----  ---  --     9.05   5  81    16.95  15  13    23.04  18  28    31.03  29   7
+2.96    2   48     ----  --  --    16.96  16   6     ----  --  --    31.04  16  94
+2.98    2   49     9.95   5  99    17.01   9  89    23.97  17  41    31.05  27  15
+3.02    2   51     9.96   6  66    17.03  13  31    23.98  22   9    31.05  23  35
+3.03    3    1     9.99   9  11    17.04  12  42    24.05  13  85
+3.04    2   52    10.01   7  43    17.05  11  55     ----  --  --
+ ----  ---  --    10.02   6  67     ----  --  --    24.96  13  92
+3.96    2   98     ----  --  --    18.02  17   6    24.96  16  56
+3.96    3   32    10.96   8  37    18.04  11  64    24.96  24   4
+3.98    2   99    10.98   6  83                     24.99  17  47
+3.99    3   33    10.98   9  22                     24.99  21  19
+4.02    3   34    10.99   7  57                     25.02  18  39
+4.04    4    1    11.04   6  84                     25.05  15  67
+4.05    3   35    11.04   8  38
+</PRE>
+These "near integer" or "extra detuned" frequencies are not available for the other DX-21 variants nor the CX variants.
+<p>
+<A NAME="DXOps"><H2>About DX Operators</H2></A>
+A DX-Synth actually calculates the entire algorithm and operator arrangement and outputs the final waveform calculation into a D/A converter for conversion into voltage. The entire process is handled digitally (ie it's one massive calculation).
+<p>
+Each operator has 2 inputs : (1) Pitch Data input, and (2) Modulation Data input. Both information is handled by an input buffer which supplies this information to an Oscillator (Waveform calculator). This Waveform calculation is further processed by an Amplifier (Magnitude calculator) which is controlled from an Envelope Generator. The destination of the final out put depends on the position of the operator in an algorithm. If it is a modulator, then the information is passed down the chain. If it is a carrier, then the information is ready for D/A conversion (actually it's not quite ready as there may be more carriers in the algorithm which then need to be summed together).
+<p>
+<A NAME="MIC"><H2>Modulation Index Calculation</H2></A>
+We already know about how sidebands are generated from a M:C combination. The amplitudes of each order of Sideband is determined by the Modulator's Output level. Before we can work out the amplitudes, we need to convert the Modulator's Output into a reference calculation known as Modulation Index.
+<p>
+The first step is to convert Output level into a TL number (doesn't apply to CX-5 and FB-01... see below). The reason for this is that the Output is non-linear and actually goes through a look-up table. So to get a proper linear output, we have to look-up the correct TL number [TL numbers have a negative relationship to the output levels]. <br>
+<PRE>
+For all Output values beyond 19, use the formula:-   [TL]  =  99  -  [Out]
+For Output values from 0 to 19, use this table:-</PRE<PRE>
+   DX.Out   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19
+   TL.val 127 122 118 114 110 107 104 102 100  98  96  94  92  90  88  86  85  84  82  81
+</PRE>
+Now we can convert it into Modulation Index. The formula for conversion differs for each ganeration of FM-synth and are as follows:-
+<p>
+For the classic/ original range of DX-synths ~ DX-1/DX-5/DX-7/DX-9/TX-7.
+<PRE>
+MODULATION INDEX     I  =  (PI)  *  2  to-the-power-of   ( (33/16) - (TL/8) )
+</PRE
+For the next generation DX-synths ~ DX-21/DX-27/DX-100.
+<PRE>
+MODULATION INDEX     I  =  (8 x PI)  *  2 to-the-power-of   ( -TL / 8 )
+</PRE
+For the computer range CX-5/FB-01 (No conversion into TL numbers).
+<PRE>
+MODULATION INDEX     I  =  (8 x PI)  *  2  to-the-power-of   ( (OUT-135) / 8)
+</PRE
+NOTE - In case you want to convert from "I" back into TL values (or OUT values), the trick is to take LOGS to-the-base 2 on each side of the equation.
+<p>
+NOTE - Don't forget that the output is controlled from an Envelope Generator. This means that changes in Level settings over time (ie an envelope shape) results in a change in "I" (Mod Index). The original DX-synths have envelope Levels from 0~99.
+<p>
+<A NAME="MITab"><H2>DX Output ~to~ Modulation Index Table</H2></A>
+Below is the table of Modulation Indices for each of the FM synth types:-<br>
+<PRE>
+         ------Modulation Indices-------              ------Modulation Indices-------          -Mod Indx-
+OUT  TL  --[DX7]--  --[DX21]-  --[CX5]--     OUT  TL  --[DX7]--  --[DX21]-  --[CX5]--     OUT  --[CX5]--
+ 0  127   0.000218   0.000418   0.000209     50   49   0.188025   0.360107   0.015915     100   1.211250
+ 1  122   0.000337   0.000645   0.000228     51   48   0.205043   0.392699   0.017355     101   1.320877
+ 2  118   0.000476   0.000912   0.000249     52   47   0.223601   0.428241   0.018926     102   1.440427
+ 3  114   0.000674   0.001290   0.000271     53   46   0.243838   0.467001   0.020639     103   1.570796
+ 4  110   0.000952   0.001824   0.000296     54   45   0.265907   0.509268   0.022507     104   1.712966
+ 5  107   0.001235   0.002366   0.000322     55   44   0.289974   0.555360   0.024544     105   1.868002
+ 6  104   0.001602   0.003068   0.000352     56   43   0.316219   0.605625   0.026765     106   2.037071
+ 7  102   0.001905   0.003648   0.000383     57   42   0.344839   0.660439   0.029188     107   2.221441
+ 8  100   0.002265   0.004339   0.000418     58   41   0.376050   0.720213   0.031829     108   2.422499
+ 9   98   0.002694   0.005160   0.000456     59   40   0.410085   0.785398   0.034710     109   2.641754
+10   96   0.003204   0.006136   0.000497     60   39   0.447201   0.856483   0.037852     110   2.880853
+11   94   0.003810   0.007297   0.000542     61   38   0.487676   0.934001   0.041277     111   3.141593
+12   92   0.004531   0.008678   0.000591     62   37   0.531815   1.018535   0.045013     112   3.425931
+13   90   0.005388   0.010319   0.000645     63   36   0.579948   1.110721   0.049087     113   3.736004
+14   88   0.006408   0.012272   0.000703     64   35   0.632438   1.211250   0.053530     114   4.074142
+15   86   0.007620   0.014594   0.000767     65   34   0.689679   1.320877   0.058375     115   4.442883
+16   85   0.008310   0.015915   0.000836     66   33   0.752100   1.440427   0.063658     116   4.844998
+17   84   0.009062   0.017355   0.000912     67   32   0.820171   1.570796   0.069420     117   5.283508
+18   82   0.010776   0.020639   0.000995     68   31   0.894403   1.712966   0.075703     118   5.761706
+19   81   0.011752   0.022507   0.001085     69   30   0.975353   1.868002   0.082555     119   6.283185
+20   79   0.013975   0.026765   0.001183     70   29   1.063630   2.037071   0.090027     120   6.851862
+21   78   0.015240   0.029188   0.001290     71   28   1.159897   2.221441   0.098175     121   7.472009
+22   77   0.016619   0.031829   0.001407     72   27   1.264876   2.422499   0.107060     122   8.148283
+23   76   0.018123   0.034710   0.001534     73   26   1.379357   2.641754   0.116750     123   8.885766
+24   75   0.019764   0.037852   0.001673     74   25   1.504200   2.880853   0.127317     124   9.689996
+25   74   0.021552   0.041277   0.001824     75   24   1.640341   3.141593   0.138840     125  10.567016
+26   73   0.023503   0.045013   0.001989     76   23   1.788805   3.425931   0.151406     126  11.523413
+27   72   0.025630   0.049087   0.002169     77   22   1.950706   3.736004   0.165110     127  12.566371
+28   71   0.027950   0.053530   0.002366     78   21   2.127260   4.074142   0.180053
+29   70   0.030480   0.058375   0.002580     79   20   2.319793   4.442883   0.196350
+30   69   0.033238   0.063658   0.002813     80   19   2.529752   4.844998   0.214121
+31   68   0.036247   0.069420   0.003068     81   18   2.758714   5.283508   0.233500
+32   67   0.039527   0.075703   0.003346     82   17   3.008399   5.761706   0.254634
+33   66   0.043105   0.082555   0.003648     83   16   3.280683   6.283185   0.277680
+34   65   0.047006   0.090027   0.003979     84   15   3.577610   6.851862   0.302812
+35   64   0.051261   0.098175   0.004339     85   14   3.901411   7.472009   0.330219
+36   63   0.055900   0.107060   0.004731     86   13   4.254519   8.148283   0.360107
+37   62   0.060960   0.116750   0.005160     87   12   4.639586   8.885766   0.392699
+38   61   0.066477   0.127317   0.005627     88   11   5.059505   9.689996   0.428241
+39   60   0.072494   0.138840   0.006136     89   10   5.517429  10.567016   0.467001
+40   59   0.079055   0.151406   0.006691     90    9   6.016799  11.523413   0.509268
+41   58   0.086210   0.165110   0.007297     91    8   6.561366  12.566371   0.555360
+42   57   0.094012   0.180053   0.007957     92    7   7.155220  13.703724   0.605625
+43   56   0.102521   0.196350   0.008678     93    6   7.802823  14.944017   0.660439
+44   55   0.111800   0.214121   0.009463     94    5   8.509039  16.296566   0.720213
+45   54   0.121919   0.233500   0.010319     95    4   9.279172  17.771532   0.785398
+46   53   0.132954   0.254634   0.011253     96    3  10.119009  19.379993   0.856483
+47   52   0.144987   0.277680   0.012272     97    2  11.034858  21.134032   0.934001
+48   51   0.158110   0.302812   0.013383     98    1  12.033598  23.046825   1.018535
+49   50   0.172420   0.330219   0.014594     99    0  13.122731  25.132741   1.110721
+</PRE>
+Note - When Output=0, it should really be Index=Zero. But these are the equations given and so we'll use these figures anyway.
+<p>
+<A NAME="Dev"><H2>Deviation</H2></A>
+Before we calculate the amplitudes of the sidebands, you might want to know what the Modulation Index actually is.
+<p>
+FM is a Modulator modulating the Pitch of a Carrier. Think of the Carrier being a "centre frequency" and think of the Modulation as "shifting the carrier to up and down in terms of pitch" (frequency). This occurs over time at the rate "M" (the Modulator frequency). This shifting of the carrier up and down is sinusoidal over time (since the Modulator is a Sine wave).
+<p>
+The Deviation is the difference between Carrier and the the lowest or highest instantaneous frequency. Let's say the Carrier is at 100Hz. The shifting could cause the Carrier to oscillate between say 90Hz (lowest freq) and 110Hz (highest freq). The width of oscillation from the Carrier to either extreme is the Deviation, in this case, 10Hz.
+<p>
+The relationship to Modulation Index is as follows:-
+<PRE>
+"d" = Deviation                        d
+"I" = Modulation Index          I  =  ---      ~or~    d  =  I  *  M
+"M" = Modulator Frequency              M
+</PRE
+So we can think of the Modulation Index as the "change in pitch" relative to the Modulator pitch (frequency).
+<p>
+<A NAME="Bessel"><H2>Bessel Functions</H2></A>
+"Order" refers to the distance of any Sideband from the Carrier expressed in multiples of "M". So C+M and C-M are the first order sidebands, C+2M and C-2M are the second order sidebands... etc.
+<p>
+Given you know "I" (Mod.Index), you can calculate the amplitudes of each Sideband generated by "C" and "M" using a Bessel Function. We use the letter "J" to denote a Bessel function, and they are ordered as J0, J1, J2, J3, J4 etc
+<p>
+Bessel function J0(I) = Amplitude for the Carrier, "C".<br>
+Bessel function Jn(I) = Amplitude for the Sidebands at "C + nM" and "C - nM" (where n = 1, 2, 3, 4... etc ).
+<PRE>
+Jn(I) (the nth order of "J") is a Bessel function of "I" (index).
+The Bessel function is expressed as:-
+                              inf     (-1)^{k} * (index/2)^{n+2k}
+                  Jn(index) = SUM     ---------------------------
+                              k=0           k!   *  (n + k)!
+
+Also:           Jn+1(index) = (2n/index) * Jn(index)  -  Jn-1(index)
+</PRE
+I shall not even pretend to understand the logic for Bessel functions. However, note that the Bessel function is in 2 parts: The sum (sigma) portion and the algebra portion. This means that you start with k=0 in the algebra portion, then do it again for k=1... then k=2, up to k=infinity. Jn(index) is the sum of all these numbers. Basically, each increase in "k" takes the sum one step closer to the final answer. Thankfully, there comes a point where further increase in "k" becomes fairly insignificant. Let's look at an example:-
+<PRE>
+Calculating the zero order (n=0), where Modulation Index = 1
+</PRE<PRE>
+k=0,   (-1)^{0} * (1/2)^{0+2*0}         1
+       ------------------------   =   ------   =   1
+             0! * (0+0)!                1
+
+k=1,   (-1)^{1} * (1/2)^{0+2*1}       -0.25
+       ------------------------   =   ------   =  -0.25
+             1! * (0+1)!                1
+
+k=2,   (-1)^{2} * (1/2)^{0+2*2}       0.0625
+       ------------------------   =   ------   =   0.015625
+             2! * (0+2)!                4
+
+Sum for k=0 to 2, we obtain  1 - 0.25 + 0.015625 = 0.765625
+If we were carry on with more "k", we should get   0.765197684   eventually.
+</PRE>
+Fortunately, some spreadsheets include this feature [in Excel, the formula is "=BesselJ(index,order)" - you will need to activate the Analysis Toolpack under Tools/AddIns]. The Bessel function tables can be found near the end of this article.
+<p>
+<A NAME="SpecAmp"><H2>Spectrum Amplitudes</H2></A>
+Having calculated the Bessel functions, you now have to assign the Jn(index) to the relevant harmonics as follows:-
+<PRE>
+Freq     :     C     C+M     C+2M    C+3M    C+4M    C+5M    C+6M   etc
+Amplitude:    J0(I)  J1(I)   J2(I)   J3(I)   J4(I)   J5(I)   J6(I)  etc
+Freq     :           C-M     C-2M    C-3M    C-4M    C-5M    C-6M   etc
+Amplitude:           J1(I)   J2(I)   J3(I)   J4(I)   J5(I)   J6(I)  etc
+</PRE
+For a graphical representation of Bessel functions, see <A HREF="x2-dxfm2.htm">FM Spectrum Graphs</A> (contains animated GIFs). It displays the Amplitudes of each Order as the Modulation Index is increased.
+<p>
+IMPORTANT - Where the Sidebands are reflected (ie "C - nM" becomes negative), the phase is inverted. Instead of treating it as a negative frequency with amplitude Jn(index), you should treat it as a positive frequency with a negative amplitude Jn(index). In short, reflected Sidebands = inverted phase = negative amplitude.
+<p>
+This is especially important if you are dealing with conicidental refected Sidebands. If you refer to the previous article "FM Synthesis", the M:C Series of 1:1 and 2:1 (and their permutations) have reflected Sidebands which are coincidental with the non-reflected Sidebands. Where the Sidebands are coincidental, just remember that the reflected Sidebands are phase inverted and hence will have negative values.
+<PRE>
+Here's an example of M:C = 2:3 on a DX-7 with Out=75:-
+Freq     :     3       5       7       9      11      13   etc
+Amplitude:    43%     57%     27%      8%      2%      0%  ignore below 0.5%
+Freq     :             1       1       3       5       7   etc
+Amplitude:            57%    -27%     -8%     -2%     -0%  ignore below 0.5%
+
+The resultant spectrum would be:-
+Freq     :     1    2    3    4    5    6    7    8    9   10   11   etc
+Amplitude:    30%   -   35%   -   55%   -   27%   -    8%   -    2%  etc
+</PRE
+Note - Bessel functions can in themselves yield negative values (phase inverted). For a DX-7, when Out > 79, some orders are negative. In short, you need to be a bit careful in assigning amplitude values.
+<p>
+Note - It is important to establish for yourself the number of decimal places to use. This is to define what value of amplitude of Sidebands are significant. I would recommend using either 2 or 3 decimal places (beyond which the Sidebands can be disregarded). The following table gives values below which there are no significant Sidebands (ie they result in Carrier only) :-
+<PRE>
+No significant Sidebands     index        DX7 Out     DX21 Out    CX5 Out
+Using 2 decimal places       0.009          17          12          44
+Using 3 decimal places       0.0009          4           2          17
+</PRE>
+Most of the examples in this article use 2 decimal places as significant (ie anything below 0.005 or 0.5% is ignored).
+<p>
+For a graphical representation of FM Spectrums, see <A HREF="x2-dxfm2.htm">FM Spectrum Graphs</A> (contains animated GIFs). It displays the amplitudes for various M:C combinations as the Modulation Index is increased. It also shows the effects of reflected Sidebands for coincident and non-coincident M:C combinations.
+<p>
+<A NAME="2Mod"><H2>Two or more Modulators</H2></A>
+So far, we have only dealt with M:C ; single sine-modulator to single sine-carrier. When there are two Modulators, they can either be "Two-Into-One" (M1 + M2 : C) or "In-Series" (M2 : M1: C).
+<p>
+<u>M1 + M2 : C (ie two separate Modulators)</u>
+<PRE>
+     M1--->-+->-C
+     M2--->-+
+</PRE
+Basically, you will end up with "M1:C" and "M2:C" added together.<br>
+Let's try a DX-7 example with M1+M2:C with 3 + 1 : 1 and let's use M1 Out=70 and M2 Out=80
+<PRE>
+For M1:C = 3 : 1 with M1 Out=70, we get:-
+Freq     :     1       4       7      10      13      16    etc
+Amplitude:    74%     46%     13%      2%      0%      0%   less than 0.5%
+Freq     :             2       5       8      11      14    etc
+Amplitude:           -46%    -13%     -2%     -0%     -0%   less than 0.5%
+
+For M2:C = 1 : 1 with M2 Out=80, we get:-
+Freq     :     1       2       3       4       5       6       7   etc
+Amplitude:    -6%     49%     45%     22%      7%      2%      0%  ignore
+Freq     :             0       1       2       3       4       5   etc
+Amplitude:            49%    -45%    -22%     -7%     -2%     -0%  ignore
+
+The resultant spectrum would be adding the results:-
+Freq      :   1    2    3    4    5    6    7    8    9   10   11   12   13   etc
+Amp. M1:C :  74% -46%   -   46% -13%   -   13%  -2%   -    2%  -0%   -    0%  etc
+Amp. M2:C : -51%  27%  38%  20%   7%   2%   0%   -    -    -    -    -    -   etc
+Amplitude :  23% -19%  38%  66%  -6%   2%  13%  -2%   -    2%   0%   -    0%  etc
+</PRE>
+In reality, the overall amplitudes would be factored-down as part of the algorithm calculation so as not to overload the Carrier's input.
+<p>
+Note that it is "convenient" to add up the amplitudes for high amounts of modulation (which results in significant Sidebands) but this is not always correct for the Carrier amplitude. The correct way to approach this is really to think of how much energy is taken from the Carrier and transferred to the Sidebands. For example in M2+M1:C, using M2 Out=17 would result in a Carrier amplitude of 100% and 1st-order Sidebands with amplitudes of less than 1%. In this case, adding up "M2:C" (Carrier amplitude only) with "M1:C" (Carrier and Sidebands) is not representative of what is happening. Don't forget that the Carrier exists unchanged (ie 100%) when there is no modulator.
+<p>
+<u>M2 : M1 : C (ie two Modulators in series)</u>
+<PRE>
+     M2--->---M1--->---C
+</PRE
+This one is a lot more complicated. Basically, "M2:M1" will produce one complex waveform and each sine-frequency (in the harmonic spectrum) will act as a sine-modulator into "C". Let's try a simplified DX-7 example with M2:M2:C with 3 : 2 : 3 and let's use M2 Out=75 and M1 Out=90.
+<PRE>
+For M2:M1 = 3 : 2 with M2 Out=75, we get J0=43%, J1=57%, J2=27%, J3=8%, and J4=2%.
+We can predict the outcome as being:-
+Freq:   1    2    3    4    5    6    7    8    9   10   11   12   13   14  etc
+Ampl: -57%  43%   -  -27%   57%  -   -8%  27%   -   -2%   8%   -   -0%   2% etc
+</PRE>
+So each of these sine-frequencies acts a modulators into "C".
+<p>
+WARNING! The next few calculations make certain assumptions about the inner-workings of the DX-chipsets. Quite frankly, I am not exactly sure of this part.<br>
+Let's normalise these sine-frequencies as a factor of M1's output (M1 Out=90). <PRE>
+Freq   :  F1    F2    F4    F5    F7    F8   F10   F11   F13   F14
+Ampl   : -57%   43%  -27%   57%   -8%   27%   -2%    8%   -0%    2%
+Ampl*90: -51.3  38.7 -24.3  51.3  -7.2  24.3  -1.8   7.2   -     1.8
+</PRE>
+At this point I would disregard any "Ampl*M1" below 35 as I have precalculated that they would be too small to produce any significant Sidebands (ie Carrier only) for 2 decimal places.
+<p>
+Next, we have to convert them into TL numbers linearly. Plus, I'm going to round them to the nearest integer.<br>
+TL(F1) would be 127 - (-51.3*127/99) = -61 <br>
+TL(F2) would be 127 - (38.7*127/99) =  77 <br>
+TL(F5) would be 127 - (51.3*127/99) =  61 <br>
+If you compare these TL numbers with the Mod.Index table, we can look up the equivalent Output value (ie Out equivalents are -38, 22 and 38 respectively).
+<PRE>
+For F1:C = 1:3 with TL(F1)= -61 (similar to DX-Out=-38)
+Freq     :    1       2       3       4       5       6    etc
+Amplitude:   -0%     -3%   -100%     -3%     -0%     -0%   ignore
+
+For F2:C = 1:3 with TL(F2)= 77 (similar to DX-Out=22)
+Freq     :    1       2       3       4       5       6    etc
+Amplitude:    1%      -     100%      -       1%      -    ignore
+
+For F5:C = 5:1 with TL(F5)= 61 (similar to DX-Out=38):-
+Freq     :    1       2       3       4       5       6       7       8  etc
+Amplitude:    -      -1%    100%      -       -       -      -0%      1% ignore
+
+This results in
+Freq     :    1       2       3       4       5       6       7       8  etc
+Amplitude:    1%     -4%    100%     -3%      1%     -0%     -0%      1% ignore
+</PRE>
+In this case, there really that much to add up especially since the Carriers are hardly affected (apart from one inverted Carrier in F1:C). As previously mentioned, we have to look at the process as the modulation taking energy away from the Carrier to produce Sidebands. Adding up convenient for Sidebands but not always applicable for the Carrier amplitude.
+<p>
+Using a different M2:M1 would yield a totally result. Also using different modulation outputs would change the Sideband amplitudes greatly. I purposely chose a small output for M2:M1 otherwise the number of significant Sinewave components would be very great indeed. As you can appreciate, the "In-Series" modulators calculation can become very complicated and perhaps confusing too. Furthermore, the results may not quite be what you imagined.
+<p>
+<u>More Modulators and FM Algorithms</u>
+<p>
+The algorithms available on FM synths can be fairly elaborate but, in general, you can analyse them into combinations of "two-into-one" or "in-series". This makes the calculation of frequencies and their amplitudes far too difficult. Perhaps this is why this kind of information is usually not presented at all. You need to ask yourself if this is really worth all the effort.
+<p>
+However, I would recommend scanning through the tables below to get a feel for the numbers of orders generated by the different outputs.
+<p>
+Actual DX algorithms can be found in article <A HREF="t2synths.htm">Synthesizer Layouts</A>.
+<p>
+<A NAME="FMTab"><H2>FM Bessel Tables</H2></A>
+Below are Bessel tables for the DX-7 type, the DX-21 type and the CX-5 type synths. The DX-7 table is calculated to 6 decimal places to illustrate how the amplitudes quickly diminish into insignificance as we progress up the orders. As such, for the DX-21 type and CX-5 type synths, the tables are calculated to 4 decimal places.
+<p>
+Every table contains some small rounding errors. However, the obvious errors will be near Out=Zero where J0=1 and all other orders should be Zero. This arises from the Mod.Index imprecisions.
+<p>
+<u><b>DX-7</b> Output level ~to~ Bessel function [Jn] Table</u> - up to 6 decimal places.<br>
+<PRE>
+OUT  --J0--     --J1--         OUT  --J0--     --J1--     --J2--         OUT  --J0--     --J1--     --J2--
+ 0    1.000000   0.000109       8    0.999999   0.001133   0.000001      18    0.999971   0.005388   0.000015
+ 1    1.000000   0.000168       9    0.999998   0.001347   0.000001      19    0.999965   0.005876   0.000017
+ 2    1.000000   0.000238      10    0.999997   0.001602   0.000001      20    0.999951   0.006987   0.000024
+ 3    1.000000   0.000337      11    0.999996   0.001905   0.000002      21    0.999942   0.007620   0.000029
+ 4    1.000000   0.000476      12    0.999995   0.002265   0.000003      22    0.999931   0.008309   0.000035
+ 5    1.000000   0.000618      13    0.999993   0.002694   0.000004      23    0.999918   0.009061   0.000041
+ 6    0.999999   0.000801      14    0.999990   0.003204   0.000005      24    0.999902   0.009881   0.000049
+ 7    0.999999   0.000952      15    0.999985   0.003810   0.000007      25    0.999884   0.010776   0.000058
+                               16    0.999983   0.004155   0.000009      26    0.999862   0.011751   0.000069
+                               17    0.999979   0.004531   0.000010      27    0.999836   0.012814   0.000082
+                                                                         28    0.999805   0.013974   0.000098
+OUT  --JO--     --JI--     --J2--     --J3--         OUT  --J0--     --J1--     --J2--     --J3--     --J4--
+29    0.999768   0.015238   0.000116   0.000001      42    0.997792   0.046954   0.001104   0.000017
+30    0.999724   0.016617   0.000138   0.000001      43    0.997374   0.051193   0.001313   0.000022
+31    0.999672   0.018120   0.000164   0.000001      44    0.996878   0.055813   0.001561   0.000029  --J4--
+32    0.999609   0.019760   0.000195   0.000001      45    0.996287   0.060846   0.001856   0.000038   0.000001
+33    0.999536   0.021547   0.000232   0.000002      46    0.995586   0.066330   0.002206   0.000049   0.000001
+34    0.999448   0.023497   0.000276   0.000002      47    0.994752   0.072303   0.002623   0.000063   0.000001
+35    0.999343   0.025622   0.000328   0.000003      48    0.993760   0.078808   0.003118   0.000082   0.000002
+36    0.999219   0.027939   0.000391   0.000004      49    0.992582   0.085890   0.003707   0.000107   0.000002
+37    0.999071   0.030466   0.000464   0.000005      50    0.991181   0.093598   0.004406   0.000138   0.000003
+38    0.998896   0.033220   0.000552   0.000006      51    0.989517   0.101984   0.005237   0.000179   0.000005
+39    0.998687   0.036223   0.000657   0.000008      52    0.987540   0.111103   0.006224   0.000232   0.000006
+40    0.998438   0.039497   0.000781   0.000010      53    0.985191   0.121015   0.007395   0.000301   0.000009
+41    0.998143   0.043065   0.000928   0.000013      54    0.982401   0.131782   0.008786   0.000390   0.000013
+OUT  --JO--     --JI--     --J2--     --J3--     --J4--     --J5--     --J6--     --J7--     --J8--
+55    0.979089   0.143468   0.010437   0.000505   0.000018   0.000001
+56    0.975157   0.156141   0.012395   0.000655   0.000026   0.000001
+57    0.970492   0.169869   0.014718   0.000848   0.000037   0.000001
+58    0.964958   0.184721   0.017469   0.001098   0.000052   0.000002
+59    0.958397   0.200763   0.020728   0.001422   0.000073   0.000003
+60    0.950624   0.218057   0.024585   0.001840   0.000103   0.000005
+61    0.941421   0.236661   0.029144   0.002381   0.000146   0.000007
+62    0.930533   0.256617   0.034527   0.003079   0.000205   0.000011  --J6--
+63    0.917666   0.277953   0.040876   0.003979   0.000290   0.000017   0.000001
+64    0.902478   0.300670   0.048351   0.005140   0.000408   0.000026   0.000001
+65    0.884575   0.324739   0.057135   0.006634   0.000575   0.000040   0.000002
+66    0.863508   0.350080   0.067432   0.008554   0.000810   0.000061   0.000004
+67    0.838770   0.376556   0.079469   0.011019   0.001139   0.000094   0.000006  --J7--
+68    0.809791   0.403950   0.093493   0.014175   0.001601   0.000144   0.000011   0.000001
+69    0.775944   0.431938   0.109763   0.018208   0.002247   0.000221   0.000018   0.000001
+70    0.736553   0.460072   0.128544   0.023345   0.003149   0.000338   0.000030   0.000002
+71    0.690906   0.487735   0.150091   0.029867   0.004405   0.000517   0.000050   0.000004  --J8--
+72    0.638284   0.514114   0.174623   0.038109   0.006150   0.000789   0.000084   0.000008   0.000001
+73    0.578004   0.538153   0.202292   0.048475   0.008565   0.001201   0.000140   0.000014   0.000001
+74    0.509483   0.558520   0.233131   0.061428   0.011893   0.001824   0.000232   0.000025   0.000002
+75    0.432336   0.573565   0.266988   0.077491   0.016455   0.002762   0.000384   0.000046   0.000005
+76    0.346495   0.581302   0.303438   0.097224   0.022672   0.004169   0.000634   0.000082   0.000009
+77    0.252390   0.579415   0.341666   0.121186   0.031077   0.006266   0.001043   0.000148   0.000018
+78    0.151156   0.565312   0.380338   0.149858   0.042340   0.009370   0.001708   0.000265   0.000036
+79    0.044890   0.536256   0.417441   0.183534   0.057259   0.013929   0.002784   0.000473   0.000070
+80   -0.063063   0.489599   0.450135   0.222147   0.076747   0.020556   0.004511   0.000840   0.000136
+81   -0.167841   0.423182   0.474638   0.265020   0.101760   0.030074   0.007254   0.001481   0.000262
+82   -0.262887   0.335919   0.486208   0.310548   0.133154   0.043537   0.011565   0.002593   0.000504
+83   -0.339957   0.228591   0.479313   0.355815   0.171433   0.062226   0.018242   0.004500   0.000960
+84   -0.389527   0.104837   0.448134   0.396206   0.216341   0.087561   0.028407   0.007722   0.001810
+85   -0.401787  -0.027801   0.387535   0.425130   0.266273   0.120875   0.043550   0.013077   0.003375
+86   -0.368493  -0.157054   0.294664   0.434090   0.317518   0.162956   0.065501   0.021791   0.006206
+87   -0.285797  -0.265834   0.171203   0.413436   0.363460   0.213275   0.096226   0.035608   0.011220
+88   -0.157918  -0.333651   0.026027   0.354228   0.394047   0.268832   0.137294   0.056799   0.019872
+89   -0.000902  -0.340427  -0.122499   0.251618   0.396125   0.322743   0.188827   0.087942   0.034318
+90    0.155265  -0.273345  -0.246126   0.109719   0.355539   0.363009   0.247787   0.131181   0.057448
+91    0.268997  -0.136238  -0.310524  -0.053066   0.261998   0.372510   0.305734   0.186643   0.092507
+92    0.297214   0.041363  -0.285652  -0.201051   0.117061   0.331933   0.346843   0.249756   0.141833
+93    0.214839   0.201891  -0.163090  -0.285497  -0.056443   0.227627   0.348168   0.307821   0.204132
+94    0.039470   0.273200   0.024744  -0.261568  -0.209184   0.064898   0.285453   0.337667   0.270113
+95   -0.153442   0.204107   0.197435  -0.118998  -0.274380  -0.117558   0.147691   0.308554   0.317842
+96   -0.249334   0.013629   0.252028   0.085997  -0.201036  -0.244935  -0.041017   0.196292   0.312595
+97   -0.164935  -0.182076   0.131935   0.229901  -0.006930  -0.234925  -0.205964   0.010948   0.219853
+98    0.055158  -0.221098  -0.091905   0.190548   0.186913  -0.066288  -0.241998  -0.175035   0.038361
+99    0.213943  -0.043921  -0.220636  -0.023333   0.209968   0.151335  -0.094645  -0.237883  -0.159141
+continuing across...
+OUT  --J9--     --J10-     --J11-     --J12-     --J13-     --J14-     --J15-     --J16-     --J17-
+76    0.000001
+77    0.000002
+78    0.000004  --J10-
+79    0.000009   0.000001
+80    0.000019   0.000002  --J11-
+81    0.000041   0.000006   0.000001
+82    0.000086   0.000013   0.000002  --J12-
+83    0.000180   0.000030   0.000005   0.000001
+84    0.000373   0.000069   0.000011   0.000002  --J13-
+85    0.000765   0.000155   0.000028   0.000005   0.000001
+86    0.001548   0.000344   0.000069   0.000013   0.000002  --J14-
+87    0.003087   0.000755   0.000166   0.000033   0.000006   0.000001  --J15-
+88    0.006043   0.001629   0.000395   0.000087   0.000018   0.000003   0.000001
+89    0.011576   0.003447   0.000921   0.000223   0.000049   0.000010   0.000002  --J16-
+90    0.021585   0.007126   0.002102   0.000561   0.000137   0.000031   0.000006   0.000001  --J17-
+91    0.038937   0.014309   0.004679   0.001381   0.000372   0.000092   0.000021   0.000005   0.000001
+92    0.067400   0.027723   0.010090   0.003301   0.000982   0.000268   0.000068   0.000016   0.000004
+93    0.110760   0.051376   0.020924   0.007621   0.002515   0.000760   0.000212   0.000055   0.000013
+94    0.170241   0.090014   0.041333   0.016850   0.006194   0.002077   0.000641   0.000184   0.000049
+95    0.239498   0.146743   0.076787   0.035311   0.014543   0.005437   0.001865   0.000591   0.000175
+96    0.297977   0.217456   0.131820   0.069136   0.032157   0.013487   0.005164   0.001821   0.000596
+97    0.307828   0.282275   0.203778   0.123993   0.065898   0.031273   0.013455   0.005308   0.001936
+98    0.226040   0.299753   0.272153   0.197801   0.122344   0.066539   0.032479   0.014432   0.005900
+99    0.043850   0.219288   0.290361   0.267496   0.198860   0.126504   0.071062   0.035952   0.016607
+continuing across even further...
+OUT  --J18-     --J19-     --J20-     --J21-     --J22-     --J23-     --J24-     --J25-     --J26-
+92    0.000001  --J19-
+93    0.000003   0.000001  --J20-
+94    0.000012   0.000003   0.000001  --J21-
+95    0.000048   0.000013   0.000003   0.000001  --J22-
+96    0.000182   0.000052   0.000014   0.000004   0.000001  --J23-
+97    0.000658   0.000209   0.000063   0.000018   0.000005   0.000001  --J24-
+98    0.002237   0.000792   0.000263   0.000082   0.000024   0.000007   0.000002  --J25-     --J26-
+99    0.007075   0.002801   0.001038   0.000361   0.000119   0.000037   0.000011   0.000003   0.000001
+</PRE>
+Note - Actually at Out=0, J0=1 and J1=Zero=J2=J3 etc but the imprecision of Mod.Index previously plus some calculation roundings will cause some small errors. The numbers near Out=Zero tend to be a bit out.<br>
+I recommend using only up to 3 decimal places, otherwise you'll go mad. Even at Out=95, you'll be calculating to 15 orders of Sidebands. <br>
+<p>
+<u><b>DX-21</b> Output level ~to~ Bessel function [Jn] Table</u> - up to 4 decimal places.<br>
+<PRE>
+OUT -JO--    --J1--   --J2--   --J3--       OUT --J0--   --J1--   --J2--   --J3--   --J4--   --J5--   --J6--
+ 0   1.0000   0.0002   0.0000               32   0.9986   0.0378   0.0007   0.0000
+ 1   1.0000   0.0003   0.0000               33   0.9983   0.0412   0.0009   0.0000
+ 2   1.0000   0.0005   0.0000               34   0.9980   0.0450   0.0010   0.0000
+ 3   1.0000   0.0006   0.0000               35   0.9976   0.0490   0.0012   0.0000
+ 4   1.0000   0.0009   0.0000               36   0.9971   0.0535   0.0014   0.0000
+ 5   1.0000   0.0012   0.0000               37   0.9966   0.0583   0.0017   0.0000
+ 6   1.0000   0.0015   0.0000               38   0.9960   0.0635   0.0020   0.0000  --J4--
+ 7   1.0000   0.0018   0.0000               39   0.9952   0.0693   0.0024   0.0001   0.0000
+ 8   1.0000   0.0022   0.0000               40   0.9943   0.0755   0.0029   0.0001   0.0000
+ 9   1.0000   0.0026   0.0000               41   0.9932   0.0823   0.0034   0.0001   0.0000
+10   1.0000   0.0031   0.0000               42   0.9919   0.0897   0.0040   0.0001   0.0000
+11   1.0000   0.0036   0.0000               43   0.9904   0.0977   0.0048   0.0002   0.0000
+12   1.0000   0.0043   0.0000               44   0.9886   0.1064   0.0057   0.0002   0.0000
+13   1.0000   0.0052   0.0000               45   0.9864   0.1160   0.0068   0.0003   0.0000
+14   1.0000   0.0061   0.0000               46   0.9839   0.1263   0.0081   0.0003   0.0000
+15   0.9999   0.0073   0.0000               47   0.9808   0.1375   0.0096   0.0004   0.0000
+16   0.9999   0.0080   0.0000               48   0.9772   0.1497   0.0114   0.0006   0.0000
+17   0.9999   0.0087   0.0000  --J3--       49   0.9729   0.1629   0.0135   0.0007   0.0000
+18   0.9999   0.0103   0.0001   0.0000      50   0.9678   0.1772   0.0160   0.0010   0.0000  --J5--
+19   0.9999   0.0113   0.0001   0.0000      51   0.9618   0.1926   0.0190   0.0012   0.0001   0.0000
+20   0.9998   0.0134   0.0001   0.0000      52   0.9547   0.2092   0.0226   0.0016   0.0001   0.0000
+21   0.9998   0.0146   0.0001   0.0000      53   0.9462   0.2272   0.0268   0.0021   0.0001   0.0000
+22   0.9997   0.0159   0.0001   0.0000      54   0.9362   0.2465   0.0317   0.0027   0.0002   0.0000
+23   0.9997   0.0174   0.0002   0.0000      55   0.9244   0.2671   0.0376   0.0035   0.0002   0.0000
+24   0.9996   0.0189   0.0002   0.0000      56   0.9104   0.2891   0.0445   0.0045   0.0003   0.0000
+25   0.9996   0.0206   0.0002   0.0000      57   0.8939   0.3125   0.0526   0.0058   0.0005   0.0000
+26   0.9995   0.0225   0.0003   0.0000      58   0.8745   0.3373   0.0621   0.0075   0.0007   0.0000  --J6--
+27   0.9994   0.0245   0.0003   0.0000      59   0.8516   0.3632   0.0732   0.0097   0.0010   0.0001   0.0000
+28   0.9993   0.0268   0.0004   0.0000      60   0.8248   0.3902   0.0862   0.0125   0.0014   0.0001   0.0000
+29   0.9991   0.0292   0.0004   0.0000      61   0.7935   0.4179   0.1013   0.0161   0.0019   0.0002   0.0000
+30   0.9990   0.0318   0.0005   0.0000      62   0.7570   0.4460   0.1188   0.0206   0.0027   0.0003   0.0000
+31   0.9988   0.0347   0.0006   0.0000      63   0.7146   0.4740   0.1390   0.0264   0.0037   0.0004   0.0000
+OUT --J0--   --J1--   --J2--   --J3--   --J4--   --J5--   --J6--   --J7--   --J8--   --J9--   --J10-
+64   0.6655   0.5011   0.1620   0.0337   0.0052   0.0006   0.0001   0.0000
+65   0.6091   0.5265   0.1881   0.0430   0.0073   0.0010   0.0001   0.0000
+66   0.5448   0.5489   0.2173   0.0546   0.0101   0.0015   0.0002   0.0000
+67   0.4720   0.5668   0.2497   0.0690   0.0140   0.0022   0.0003   0.0000  --J8--
+68   0.3905   0.5785   0.2849   0.0869   0.0193   0.0034   0.0005   0.0001   0.0000
+69   0.3004   0.5817   0.3224   0.1086   0.0266   0.0051   0.0008   0.0001   0.0000
+70   0.2026   0.5741   0.3611   0.1349   0.0363   0.0077   0.0013   0.0002   0.0000  --J9--
+71   0.0985   0.5528   0.3992   0.1661   0.0493   0.0114   0.0022   0.0004   0.0001   0.0000
+72  -0.0091   0.5153   0.4346   0.2022   0.0664   0.0169   0.0035   0.0006   0.0001   0.0000
+73  -0.1162   0.4590   0.4637   0.2431   0.0885   0.0249   0.0057   0.0011   0.0002   0.0000  --J10-
+74  -0.2171   0.3822   0.4824   0.2876   0.1166   0.0362   0.0092   0.0020   0.0004   0.0001   0.0000
+75  -0.3042   0.2846   0.4854   0.3335   0.1514   0.0521   0.0145   0.0034   0.0007   0.0001   0.0000
+76  -0.3688   0.1684   0.4671   0.3770   0.1931   0.0740   0.0228   0.0059   0.0013   0.0003   0.0000
+77  -0.4009   0.0390   0.4218   0.4126   0.2409   0.1032   0.0352   0.0101   0.0025   0.0005   0.0001
+78  -0.3912  -0.0938   0.3452   0.4327   0.2921   0.1408   0.0536   0.0169   0.0046   0.0011   0.0002
+79  -0.3333  -0.2152   0.2364   0.4281   0.3417   0.1872   0.0797   0.0279   0.0084   0.0022   0.0005
+80  -0.2268  -0.3062   0.1004   0.3891   0.3814   0.2407   0.1154   0.0451   0.0150   0.0043   0.0011
+81  -0.0815  -0.3457  -0.0494   0.3084   0.3996   0.2966   0.1618   0.0710   0.0262   0.0084   0.0024
+82   0.0797  -0.3164  -0.1895   0.1848   0.3820   0.3455   0.2178   0.1080   0.0446   0.0159   0.0050
+83   0.2203  -0.2124  -0.2879   0.0291   0.3157   0.3728   0.2777   0.1575   0.0733   0.0291   0.0101
+84   0.2961  -0.0495  -0.3105  -0.1318   0.1951   0.3596   0.3297   0.2178   0.1153   0.0515   0.0200
+85   0.2700   0.1282  -0.2357  -0.2544   0.0314   0.2880   0.3541   0.2806   0.1717   0.0870   0.0380
+86   0.1354   0.2530  -0.0733  -0.2890  -0.1394   0.1521   0.3261   0.3281   0.2377   0.1386   0.0685
+87  -0.0616   0.2572   0.1195  -0.2034  -0.2569  -0.0278   0.2255   0.3324   0.2982   0.2045   0.1161
+88  -0.2206   0.1190   0.2452  -0.0178  -0.2562  -0.1937   0.0562   0.2634   0.3243   0.2721   0.1811
+89  -0.2309  -0.0940   0.2131   0.1746  -0.1139  -0.2609  -0.1330   0.1099   0.2785   0.3119   0.2527
+90  -0.0623  -0.2294   0.0225   0.2372   0.1010  -0.1671  -0.2460  -0.0891   0.1377   0.2804   0.3002
+91   0.1575  -0.1545  -0.1821   0.0966   0.2282   0.0487  -0.1894  -0.2296  -0.0664   0.1451   0.2742
+92   0.2029   0.0799  -0.1913  -0.1357   0.1318   0.2127   0.0233  -0.1922  -0.2197  -0.0643   0.1352
+93  -0.0027   0.2063   0.0303  -0.1982  -0.1099   0.1394   0.2032   0.0238  -0.1809  -0.2175  -0.0810
+94  -0.1935   0.0342   0.1977   0.0143  -0.1924  -0.1088   0.1257   0.2013   0.0473  -0.1549  -0.2184
+95  -0.0559  -0.1824   0.0353   0.1904   0.0290  -0.1774  -0.1288   0.0904   0.2000   0.0896  -0.1092
+96   0.1751  -0.0423  -0.1794   0.0053   0.1811   0.0694  -0.1452  -0.1594   0.0301   0.1842   0.1410
+97   0.0135   0.1734   0.0030  -0.1728  -0.0520   0.1531   0.1245  -0.0825  -0.1791  -0.0531   0.1338
+98  -0.1604  -0.0470   0.1563   0.0741  -0.1370  -0.1217   0.0842   0.1655   0.0163  -0.1542  -0.1368
+99   0.1120  -0.1109  -0.1208   0.0917   0.1427  -0.0462  -0.1611  -0.0307   0.1440   0.1223  -0.0564
+continuing across...
+OUT --J11-   --J12-   --J13-   --J14-   --J15-   --J16-   --J17-   --J18-   --J19-   --J20-   --J21-
+78   0.0000
+79   0.0001   0.0000  --J13-
+80   0.0003   0.0001   0.0000
+81   0.0006   0.0001   0.0000  --J14-
+82   0.0014   0.0004   0.0001   0.0000  --J15-
+83   0.0031   0.0009   0.0002   0.0001   0.0000
+84   0.0069   0.0021   0.0006   0.0002   0.0000  --J16-
+85   0.0146   0.0050   0.0016   0.0005   0.0001   0.0000  --J17-
+86   0.0296   0.0114   0.0040   0.0013   0.0004   0.0001   0.0000  --J18-
+87   0.0568   0.0246   0.0096   0.0034   0.0011   0.0003   0.0001   0.0000  --J19-
+88   0.1017   0.0499   0.0218   0.0086   0.0031   0.0010   0.0003   0.0001   0.0000  --J20-
+89   0.1664   0.0938   0.0465   0.0207   0.0084   0.0031   0.0011   0.0003   0.0001   0.0000  --J21-
+90   0.2407   0.1593   0.0911   0.0462   0.0211   0.0088   0.0034   0.0012   0.0004   0.0001   0.0000
+91   0.2913   0.2358   0.1590   0.0932   0.0487   0.0231   0.0100   0.0040   0.0015   0.0005   0.0002
+92   0.2617   0.2849   0.2373   0.1652   0.1004   0.0545   0.0269   0.0122   0.0051   0.0020   0.0007
+93   0.1090   0.2415   0.2789   0.2437   0.1777   0.1130   0.0643   0.0332   0.0158   0.0070   0.0029
+94  -0.1131   0.0657   0.2098   0.2691   0.2525   0.1957   0.1318   0.0793   0.0434   0.0218   0.0102
+95  -0.2125  -0.1539   0.0047   0.1608   0.2486   0.2589   0.2176   0.1573   0.1012   0.0590   0.0316
+96  -0.0387  -0.1849  -0.1903  -0.0704   0.0886   0.2076   0.2541   0.2383   0.1885   0.1313   0.0825
+97   0.1798   0.0533  -0.1192  -0.2000  -0.1458  -0.0069   0.1353   0.2246   0.2473   0.2200   0.1691
+98   0.0355   0.1707   0.1422  -0.0102  -0.1546  -0.1911  -0.1106   0.0278   0.1541   0.2263   0.2386
+99  -0.1672  -0.0900   0.0813   0.1741   0.1126  -0.0396  -0.1631  -0.1810  -0.0962   0.0356   0.1528
+continuing even further across...
+OUT --J22-   --J23-   --J24-   --J25-   --J26-   --J27-   --J28-   --J29-   --J30-   --J31-   --J32-
+91   0.0001   0.0000
+92   0.0003   0.0001   0.0000  --J25-
+93   0.0011   0.0004   0.0001   0.0000  --J26-   --J27-
+94   0.0045   0.0018   0.0007   0.0003   0.0001   0.0000  --J28-   --J29-
+95   0.0157   0.0073   0.0032   0.0013   0.0005   0.0002   0.0001   0.0000  --J30-   --J31-
+96   0.0475   0.0253   0.0126   0.0059   0.0026   0.0011   0.0004   0.0002   0.0001   0.0000  --J32-
+97   0.1161   0.0725   0.0418   0.0225   0.0113   0.0054   0.0024   0.0010   0.0004   0.0002   0.0001
+98   0.2086   0.1596   0.1099   0.0694   0.0406   0.0222   0.0114   0.0056   0.0026   0.0011   0.0005
+99   0.2198   0.2319   0.2048   0.1591   0.1118   0.0722   0.0434   0.0244   0.0130   0.0065   0.0031
+continuing yet even further across...
+OUT --J33-   --J34-   --J35-   --J36-
+97   0.0000
+98   0.0002   0.0001   0.0000
+99   0.0014   0.0006   0.0003   0.0001
+</PRE>
+Note - Actually at Out=0, J0=1 and J1=Zero=J2=J3 etc but the imprecision of Mod.Index previously plus some calculation roundings will cause some small errors. The numbers near Out=Zero tend to be a bit out.<br>
+Because the DX-21 type synths can attain Mod.Index=25, the number of Sidebands can go up to very high orders. <br>
+<p>
+<u><b>CX-5</b> Output level ~to~ Bessel function [Jn] Table</u> - up to 4 decimal places.<br>
+<PRE>
+OUT --J0--   --J1--   --J2--         OUT --J0--   --J2--   --J3--   --J4--   --J5--   --J6--
+ 0   1.0000   0.0001   0.0000        47   1.0000   0.0061   0.0000
+ 1   1.0000   0.0001   0.0000        48   1.0000   0.0067   0.0000
+ 2   1.0000   0.0001   0.0000        49   0.9999   0.0073   0.0000
+ 3   1.0000   0.0001   0.0000        50   0.9999   0.0080   0.0000
+ 4   1.0000   0.0001   0.0000        51   0.9999   0.0087   0.0000
+ 5   1.0000   0.0002   0.0000        52   0.9999   0.0095   0.0000  --J4--
+ 6   1.0000   0.0002   0.0000        53   0.9999   0.0103   0.0001   0.0000
+ 7   1.0000   0.0002   0.0000        54   0.9999   0.0113   0.0001   0.0000
+ 8   1.0000   0.0002   0.0000        55   0.9998   0.0123   0.0001   0.0000
+ 9   1.0000   0.0002   0.0000        56   0.9998   0.0134   0.0001   0.0000
+10   1.0000   0.0002   0.0000        57   0.9998   0.0146   0.0001   0.0000
+11   1.0000   0.0003   0.0000        58   0.9997   0.0159   0.0001   0.0000
+12   1.0000   0.0003   0.0000        59   0.9997   0.0174   0.0002   0.0000
+13   1.0000   0.0003   0.0000        60   0.9996   0.0189   0.0002   0.0000
+14   1.0000   0.0004   0.0000        61   0.9996   0.0206   0.0002   0.0000
+15   1.0000   0.0004   0.0000        62   0.9995   0.0225   0.0003   0.0000
+16   1.0000   0.0004   0.0000        63   0.9994   0.0245   0.0003   0.0000
+17   1.0000   0.0005   0.0000        64   0.9993   0.0268   0.0004   0.0000
+18   1.0000   0.0005   0.0000        65   0.9991   0.0292   0.0004   0.0000
+19   1.0000   0.0005   0.0000        66   0.9990   0.0318   0.0005   0.0000
+20   1.0000   0.0006   0.0000        67   0.9988   0.0347   0.0006   0.0000
+21   1.0000   0.0006   0.0000        68   0.9986   0.0378   0.0007   0.0000
+22   1.0000   0.0007   0.0000        69   0.9983   0.0412   0.0009   0.0000
+23   1.0000   0.0008   0.0000        70   0.9980   0.0450   0.0010   0.0000
+24   1.0000   0.0008   0.0000        71   0.9976   0.0490   0.0012   0.0000
+25   1.0000   0.0009   0.0000        72   0.9971   0.0535   0.0014   0.0000
+26   1.0000   0.0010   0.0000        73   0.9966   0.0583   0.0017   0.0000
+27   1.0000   0.0011   0.0000        74   0.9960   0.0635   0.0020   0.0000  --J5--
+28   1.0000   0.0012   0.0000        75   0.9952   0.0693   0.0024   0.0001   0.0000
+29   1.0000   0.0013   0.0000        76   0.9943   0.0755   0.0029   0.0001   0.0000
+30   1.0000   0.0014   0.0000        77   0.9932   0.0823   0.0034   0.0001   0.0000
+31   1.0000   0.0015   0.0000        78   0.9919   0.0897   0.0040   0.0001   0.0000
+32   1.0000   0.0017   0.0000        79   0.9904   0.0977   0.0048   0.0002   0.0000
+33   1.0000   0.0018   0.0000        80   0.9886   0.1064   0.0057   0.0002   0.0000
+34   1.0000   0.0020   0.0000        81   0.9864   0.1160   0.0068   0.0003   0.0000
+35   1.0000   0.0022   0.0000        82   0.9839   0.1263   0.0081   0.0003   0.0000
+36   1.0000   0.0024   0.0000        83   0.9808   0.1375   0.0096   0.0004   0.0000
+37   1.0000   0.0026   0.0000        84   0.9772   0.1497   0.0114   0.0006   0.0000
+38   1.0000   0.0028   0.0000        85   0.9729   0.1629   0.0135   0.0007   0.0000
+39   1.0000   0.0031   0.0000        86   0.9678   0.1772   0.0160   0.0010   0.0000  --J6--
+40   1.0000   0.0033   0.0000        87   0.9618   0.1926   0.0190   0.0012   0.0001   0.0000
+41   1.0000   0.0036   0.0000        88   0.9547   0.2092   0.0226   0.0016   0.0001   0.0000
+42   1.0000   0.0040   0.0000        89   0.9462   0.2272   0.0268   0.0021   0.0001   0.0000
+43   1.0000   0.0043   0.0000        90   0.9362   0.2465   0.0317   0.0027   0.0002   0.0000
+44   1.0000   0.0047   0.0000        91   0.9244   0.2671   0.0376   0.0035   0.0002   0.0000
+45   1.0000   0.0052   0.0000        92   0.9104   0.2891   0.0445   0.0045   0.0003   0.0000
+46   1.0000   0.0056   0.0000        93   0.8939   0.3125   0.0526   0.0058   0.0005   0.0000
+                                     94   0.8745   0.3373   0.0621   0.0075   0.0007   0.0000
+OUT  --J0--   --J1--   --J2--   --J3--   --J4--   --J5--   --J6--   --J7--   --J8--   --J9--   --J10-
+ 95   0.8516   0.3632   0.0732   0.0097   0.0010   0.0001   0.0000
+ 96   0.8248   0.3902   0.0862   0.0125   0.0014   0.0001   0.0000
+ 97   0.7935   0.4179   0.1013   0.0161   0.0019   0.0002   0.0000
+ 98   0.7570   0.4460   0.1188   0.0206   0.0027   0.0003   0.0000
+ 99   0.7146   0.4740   0.1390   0.0264   0.0037   0.0004   0.0000  --J7--
+100   0.6655   0.5011   0.1620   0.0337   0.0052   0.0006   0.0001   0.0000
+101   0.6091   0.5265   0.1881   0.0430   0.0073   0.0010   0.0001   0.0000
+102   0.5448   0.5489   0.2173   0.0546   0.0101   0.0015   0.0002   0.0000
+103   0.4720   0.5668   0.2497   0.0690   0.0140   0.0022   0.0003   0.0000  --J8--
+104   0.3905   0.5785   0.2849   0.0869   0.0193   0.0034   0.0005   0.0001   0.0000
+105   0.3004   0.5817   0.3224   0.1086   0.0266   0.0051   0.0008   0.0001   0.0000
+106   0.2026   0.5741   0.3611   0.1349   0.0363   0.0077   0.0013   0.0002   0.0000  --J9--
+107   0.0985   0.5528   0.3992   0.1661   0.0493   0.0114   0.0022   0.0004   0.0001   0.0000
+108  -0.0091   0.5153   0.4346   0.2022   0.0664   0.0169   0.0035   0.0006   0.0001   0.0000
+109  -0.1162   0.4590   0.4637   0.2431   0.0885   0.0249   0.0057   0.0011   0.0002   0.0000  --J10-
+110  -0.2171   0.3822   0.4824   0.2876   0.1166   0.0362   0.0092   0.0020   0.0004   0.0001   0.0000
+111  -0.3042   0.2846   0.4854   0.3335   0.1514   0.0521   0.0145   0.0034   0.0007   0.0001   0.0000
+112  -0.3688   0.1684   0.4671   0.3770   0.1931   0.0740   0.0228   0.0059   0.0013   0.0003   0.0000
+113  -0.4009   0.0390   0.4218   0.4126   0.2409   0.1032   0.0352   0.0101   0.0025   0.0005   0.0001
+114  -0.3912  -0.0938   0.3452   0.4327   0.2921   0.1408   0.0536   0.0169   0.0046   0.0011   0.0002
+115  -0.3333  -0.2152   0.2364   0.4281   0.3417   0.1872   0.0797   0.0279   0.0084   0.0022   0.0005
+116  -0.2268  -0.3062   0.1004   0.3891   0.3814   0.2407   0.1154   0.0451   0.0150   0.0043   0.0011
+117  -0.0815  -0.3457  -0.0494   0.3084   0.3996   0.2966   0.1618   0.0710   0.0262   0.0084   0.0024
+118   0.0797  -0.3164  -0.1895   0.1848   0.3820   0.3455   0.2178   0.1080   0.0446   0.0159   0.0050
+119   0.2203  -0.2124  -0.2879   0.0291   0.3157   0.3728   0.2777   0.1575   0.0733   0.0291   0.0101
+120   0.2961  -0.0495  -0.3105  -0.1318   0.1951   0.3596   0.3297   0.2178   0.1153   0.0515   0.0200
+121   0.2700   0.1282  -0.2357  -0.2544   0.0314   0.2880   0.3541   0.2806   0.1717   0.0870   0.0380
+122   0.1354   0.2530  -0.0733  -0.2890  -0.1394   0.1521   0.3261   0.3281   0.2377   0.1386   0.0685
+123  -0.0616   0.2572   0.1195  -0.2034  -0.2569  -0.0278   0.2255   0.3324   0.2982   0.2045   0.1161
+124  -0.2206   0.1190   0.2452  -0.0178  -0.2562  -0.1937   0.0562   0.2634   0.3243   0.2721   0.1811
+125  -0.2309  -0.0940   0.2131   0.1746  -0.1139  -0.2609  -0.1330   0.1099   0.2785   0.3119   0.2527
+126  -0.0623  -0.2294   0.0225   0.2372   0.1010  -0.1671  -0.2460  -0.0891   0.1377   0.2804   0.3002
+127   0.1575  -0.1545  -0.1821   0.0966   0.2282   0.0487  -0.1894  -0.2296  -0.0664   0.1451   0.2742
+continuing across...
+OUT  --J11-   --J12-   --J13-   --J14-   --J15-   --J16-   --J17-   --J18-   --J19-   --J20-   --J21-   --J22-
+114   0.0000
+115   0.0001   0.0000  --J13-
+116   0.0003   0.0001   0.0000
+117   0.0006   0.0001   0.0000  --J14-
+118   0.0014   0.0004   0.0001   0.0000  --J15-
+119   0.0031   0.0009   0.0002   0.0001   0.0000
+120   0.0069   0.0021   0.0006   0.0002   0.0000  --J16-
+121   0.0146   0.0050   0.0016   0.0005   0.0001   0.0000  --J17-
+122   0.0296   0.0114   0.0040   0.0013   0.0004   0.0001   0.0000  --J18-
+123   0.0568   0.0246   0.0096   0.0034   0.0011   0.0003   0.0001   0.0000  --J19-
+124   0.1017   0.0499   0.0218   0.0086   0.0031   0.0010   0.0003   0.0001   0.0000  --J20-
+125   0.1664   0.0938   0.0465   0.0207   0.0084   0.0031   0.0011   0.0003   0.0001   0.0000  --J21-
+126   0.2407   0.1593   0.0911   0.0462   0.0211   0.0088   0.0034   0.0012   0.0004   0.0001   0.0000  --J22-
+127   0.2913   0.2358   0.1590   0.0932   0.0487   0.0231   0.0100   0.0040   0.0015   0.0005   0.0002   0.0001
+</PRE>
+Note - Actually at Out=0, J0=1 and J1=Zero=J2=J3 etc but the imprecision of Mod.Index previously plus some calculation roundings will cause some small errors. The numbers near Out=Zero tend to be a bit out.<br>
+The range of Bessel values for the CX-5 type synths are similar to the DX-7 type but the Mod.Index curve is slightly different. <br>
+<p>
+<A NAME="Read"><H2>Recommended Reading</H2></A>
+Here are some links and material I've found for FM Synthesis and related information.
+<UL>
+<LI> http://www.sfu.ca/sca/Manuals/fm/FM_Tutorial.html
+
+<LI> http://www.sfu.ca/~truax/fmtut.html
+<LI> http://www.esm.rochester.edu/www/onlinedocs/allan.cs/chapter3.html
+<LI> http://cis.poly.edu/cs240/notes6.htm
+<LI> http://www.telecommunication.msu.edu/classes/tc201/slides/fm/index.htm
+<LI> http://www.neuroinformatik.ruhr-uni-bochum.de/ini/PEOPLE/heja/sy-prog/node55.html
+<LI> http://ccrma-www.stanford.edu/CCRMA/Software/clm/clm-manual/fm.html
+</UL>
+I haven't personally read this stuff, but they come highly recommended.
+<UL>
+<LI>The Synthesis of Complex Audio Spectra by Means of Frequency Modulation [John M Chowning & Max Mathews] - Audio Engineering Society Journal - Vol.21/ No.7 (1973): pg 526-534.
+<LI>FM Theory and Applications by Musicians for Musicians [John M Chowning & Dave Bristow] - Yamaha Music Foundation, Tokyo (1986) ISBN 4-636-17482-8
+<LI>The Simulation of Natural Instrument Tones using Frequency Modulation with a Complex Modulating Wave [Bill Schottstaedt] - Computer Music Journal - Vol.1, No.4 (1977) : pg 46-50.
+<LI>A Derivation of the Spectrum of FM with a Complex Modulating Wave [Marc LeBrun] - Computer Music Journal - Vol.1/ No.4 (1977): pg 51-52.
+</UL>
+<br>
+<A NAME="Hist"><H2>The FM Legend - A Personal History</H2></A>
+For me, it all started one day in mid'1984 when I walked into my friendly neighbourhood music-inst shop (actually, it was Soho Soundhouse, London) and there was a buzz in the air. The sales-guy says "You're here to try out the DX-7, right?". I, of course, didn't know what he was talking about and enquired about the price. It was out of my reach (obviously). Not to be deterred, the sales-guy instead plonks me in front of a Yamaha DX-9 and hands me some headphones. I started playing and... aaaahh, heaven!
+<p>
+It's hard to describe what I heard (bearing in mind it's my first time hearing F.M. synthesis). You have to understand that, up to this point, synths were all about strings and brass. Occasionally, you'd have a few plinky plonky xylo-sounds (heck, the MKS-10 was considered realistic) but percussives, vibes, pianos etc were elusive (ie non-existent). But right there in front of me, in the form of a DX-9, was the holy grail. And, to make matters worse, there weren't any knobs or sliders or anything in fact which gave any inkling as to how this synth worked.
+<p>
+I was hooked! I took the plunge and bought a DX-7 in Nov'84 and later a CX-5 in Jan'85. Unfortunately, programming these FM synths was an absolute nightmare. Nothing was fast and nothing was easy. It really wasn't intuitive at all and the manual wasn't exactly that helpful. But I was determined to master this beast. Learning to program the DX-7 was a slow and tedious process.
+<p>
+But one day in late 1984, humanity was saved by a fellow synth-enthusiast called Tony Wride. Fed-up and tired with struggling alone with his DX-7, he mooted the idea of a "DX-club" in a letter to the magazine "Electronics And Music Maker". This caused a huge stirring of support from the public (DX synth owners), the media (music mags) and Yamaha too. Thus was born the DX-Owners Club.
+<p>
+It was the DX-Owners Club which took FM programming to new heights. Via its newsletter, we began sharing patches/ sounds (one patch called "Wurlitzer" was really popular) and programming techniques (excellent articles by Ken Campbell). Part of Tony Wride's vision was also to have a network of co-ordinators who anyone could telephone for help and advice (you'll find listed under Area Co-ordinator for London W2 is "Yahaya 01-221-5314" which is me).
+<p>
+Beyond the popular newsletter (these typed-up/ hand-drawn photocopy newsletters were inspirational), the club also organised get-together seminars bringing programmers together to meet experts like Dave Bristow to discuss FM in depth (I remember that fixed-frequency operators was a big topic). FM ruled and the DX-7 was king... Life was good!
+<p>
+But as life goes on, reality takes its hold... Tony's job in the RAF gave him less time to run the club. Eventually, the club was handed over to (surprise surprise) Yamaha who appointed Martin Tennant (not to be confused with Martin Russ) to run the re-named X-Series Owners Club. With Yamaha's backing (ie money), the newsletter became a regular magazine (with pictures and all) and everything was taken to a more polished level.
+<p>
+The X-Series Owners Club was good... but with the change of management of the club, came a change in objectivity. You see, us members may all be dx-synth enthusiasts but we didn't work for Yamaha (the old newsletter would include info on non-Yamaha products as well). I remember an interesting session where Yamaha was launching their DX-5 while Tony was happily proposing to just add a TX-7 to a DX-7 (ie half the cost). Ah, well! Nevermind.
+<p>
+As far as I know, the magazine continued until around mid'1987.
+<p>
+
+</body>
+</HTML>
+
