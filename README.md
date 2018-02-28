@@ -19,9 +19,11 @@ mdxtract.py [-h, --help] [-v, --verbose] [infiles ...]
 
 **pdxtract.py**
 ```
-pdxtract.py [-h, --help] [infiles ...]
+pdxtract.py [-h, --help] [-v, --verbose] [-r N, --samplerate N] [infiles ...]
 ```
  - ADPCM data will be converted and written as `<filename>_<n>.wav`
+ - Default sample rate is 15625 Hz, the most common setting on a X68000
+ - In verbose mode some not-so-intriguing data will be printed to stdout
 
 
 ## tips & tricks
