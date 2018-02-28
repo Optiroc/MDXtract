@@ -385,11 +385,15 @@ class MDX(object):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('-v', action='store_true', default=False, dest='verbose', help='verbose output')
+  parser.add_argument("-v", "--verbose", dest="verbose", action="store_true", default=False, help="verbose output")
   parser.add_argument("infiles", nargs="*", help="input file(s)")
 
   try:
     arguments = parser.parse_args()
+    if len(arguments.infiles) == 0:
+      parser.print_help()
+      sys.exit(0)
+
     first = True
     for path in arguments.infiles:
       with open(path, "rb") as infile:
