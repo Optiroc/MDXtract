@@ -50,7 +50,6 @@ import os
 import struct
 import math
 import audioop
-import binascii
 import argparse
 
 #-----------------------------------------------------------------------------
@@ -65,23 +64,29 @@ def clip_int16(value):
 def clip_int8(value):
   return int(max(-128, min(value, 127)))
 
-def get_uint16(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset] << 8) + bytes[offset + 1]
-  else:
+def get_uint16(bytes, offset, big_endian=False):
+  if not big_endian:
     return bytes[offset] + (bytes[offset + 1] << 8)
-
-def get_uint24(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset + 0] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 2]
   else:
+    return (bytes[offset] << 8) + bytes[offset + 1]
+
+def get_uint24(bytes, offset, big_endian=False):
+  if not big_endian:
     return (bytes[offset + 2] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 0]
-
-def get_uint32(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset + 0] << 24) + (bytes[offset + 1] << 16) + (bytes[offset + 2] << 8) + bytes[offset + 3]
   else:
+    return (bytes[offset + 0] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 2]
+
+def get_uint32(bytes, offset, big_endian=False):
+  if not big_endian:
     return (bytes[offset + 3] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 0]
+  else:
+    return (bytes[offset + 0] << 24) + (bytes[offset + 1] << 16) + (bytes[offset + 2] << 8) + bytes[offset + 3]
+
+def nibbles(bytes, big_endian=False):
+  shift = [0,4] if not big_endian else [4,0]
+  for byte in bytes:
+    for s in shift:
+      yield (byte >> s) & 0x0F
 
 
 #-----------------------------------------------------------------------------
@@ -97,14 +102,12 @@ class YM_ADPCM(object):
     decoded = bytearray()
     signal =  0
     step = 127
-    for byte in data:
-      for n in [4,0]:
-        nibble = (byte >> n) & 0x0F
-        signal += (step * YM_ADPCM.diff_lut[nibble]) / 8
-        signal = clip_int16(signal)
-        step = (step * YM_ADPCM.step_lut[nibble]) / 64
-        step = clip_int(step, YM_ADPCM.step_min, YM_ADPCM.step_max)
-        decoded.extend(struct.pack("<h", signal))
+    for nibble in nibbles(data, True):
+      signal += (step * YM_ADPCM.diff_lut[nibble]) / 8
+      signal = clip_int16(signal)
+      step = (step * YM_ADPCM.step_lut[nibble]) / 64
+      step = clip_int(step, YM_ADPCM.step_min, YM_ADPCM.step_max)
+      decoded.extend(struct.pack("<h", signal))
     return decoded
 
 
@@ -133,16 +136,14 @@ class OKI_ADPCM(object):
 
   def decode(data):
     decoded = bytearray()
-    signal = -2;
+    signal = -2
     step = 0
-    for byte in data:
-      for n in [0,4]:
-        nibble = (byte >> n) & 0x0F
-        signal += OKI_ADPCM.diff_lut[step * 16 + nibble]
-        signal = clip_int16(signal)
-        step += OKI_ADPCM.step_lut[nibble];
-        step = clip_int(step, OKI_ADPCM.step_min, OKI_ADPCM.step_max)
-        decoded.extend(struct.pack("<h", signal))
+    for nibble in nibbles(data, False):
+      signal += OKI_ADPCM.diff_lut[step * 16 + nibble]
+      signal = clip_int16(signal)
+      step += OKI_ADPCM.step_lut[nibble]
+      step = clip_int(step, OKI_ADPCM.step_min, OKI_ADPCM.step_max)
+      decoded.extend(struct.pack("<h", signal))
     return decoded
 
 
@@ -215,14 +216,14 @@ def extract_ppc(data):
   # Get offsets
   pcm_offsets = []
   for i in range(256):
-    start = (get_uint16(data, 0x20 + i * 4, False) << 5)
-    end = (get_uint16(data, 0x22 + i * 4, False) << 5) - 1
+    start = (get_uint16(data, 0x20 + i * 4) << 5)
+    end = (get_uint16(data, 0x22 + i * 4) << 5) - 1
     pcm_offsets.append((start, end))
 
   # Get PCM data
   pcm_data = []
 
-  pcm_ends = get_uint16(data, header_len, False) << 5
+  pcm_ends = get_uint16(data, header_len) << 5
   pcm_ram = bytearray([0x00] * (0x26 << 5))
   pcm_ram.extend(data[0x420:])
   pcm_ram_len = len(pcm_ram)
@@ -251,8 +252,8 @@ def extract_pps(data):
   # Get offsets
   pcm_offsets = []
   for i in range(14):
-    start = get_uint16(data, i * 6, False)
-    end = start + get_uint16(data, i * 6 + 2, False) - 1
+    start = get_uint16(data, i * 6)
+    end = start + get_uint16(data, i * 6 + 2) - 1
     if start > data_len: return bad_data()
     pcm_offsets.append((start, end))
 
@@ -283,9 +284,9 @@ def extract_pvi(data):
   pcm_offsets = []
   for i in range(128):
     start = end = 0
-    if get_uint16(data, i * 4 + 0x12, False) != 0:
-      start =(get_uint16(data, i * 4 + 0x10, False) << 5)
-      end = (get_uint16(data, i * 4 + 0x12, False) << 5) - 1
+    if get_uint16(data, i * 4 + 0x12) != 0:
+      start =(get_uint16(data, i * 4 + 0x10) << 5)
+      end = (get_uint16(data, i * 4 + 0x12) << 5) - 1
     if end < start: end = start
     pcm_offsets.append((start + 0x210, end + 0x210))
 
@@ -307,14 +308,14 @@ def extract_p86(data):
   data_len = len(data)
   header_len = 16
   if data_len < header_len + 256 * 6 + 2: return bad_data()
-  if data_len != get_uint24(data, 0x0D, False): return bad_data()
+  if data_len != get_uint24(data, 0x0D): return bad_data()
 
   # Get offsets
   pcm_offsets = []
   for i in range(256):
-    start = get_uint24(data, header_len + i * 6, False)
+    start = get_uint24(data, header_len + i * 6)
     if start > data_len: return bad_data()
-    end = start + get_uint24(data, header_len + 3 + i * 6, False) - 1
+    end = start + get_uint24(data, header_len + 3 + i * 6) - 1
     if end < 0: end = 0
     pcm_offsets.append((start, end))
 
@@ -339,10 +340,10 @@ def extract_p68(data):
   # Get offsets
   pcm_offsets = []
   for i in range(256):
-    start = get_uint32(data, i * 4)
+    start = get_uint32(data, i * 4, True)
     if start > data_len: return bad_data()
-    end = get_uint32(data, 4 + (i * 4)) - 1
-    if i > 0 and get_uint32(data, (i - 1) * 4) == data_len:
+    end = get_uint32(data, 4 + (i * 4), True) - 1
+    if i > 0 and get_uint32(data, (i - 1) * 4, True) == data_len:
       pcm_offsets = pcm_offsets[0:-1]
       break
     pcm_offsets.append((start, end))

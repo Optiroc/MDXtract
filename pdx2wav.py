@@ -42,23 +42,29 @@ def clip_int(value, min_value, max_value):
 def clip_int16(value):
   return int(max(-32768, min(value, 32767)))
 
-def get_uint16(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset] << 8) + bytes[offset + 1]
-  else:
+def get_uint16(bytes, offset, big_endian=False):
+  if not big_endian:
     return bytes[offset] + (bytes[offset + 1] << 8)
-
-def get_uint24(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset + 0] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 2]
   else:
+    return (bytes[offset] << 8) + bytes[offset + 1]
+
+def get_uint24(bytes, offset, big_endian=False):
+  if not big_endian:
     return (bytes[offset + 2] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 0]
-
-def get_uint32(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset + 0] << 24) + (bytes[offset + 1] << 16) + (bytes[offset + 2] << 8) + bytes[offset + 3]
   else:
+    return (bytes[offset + 0] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 2]
+
+def get_uint32(bytes, offset, big_endian=False):
+  if not big_endian:
     return (bytes[offset + 3] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 0]
+  else:
+    return (bytes[offset + 0] << 24) + (bytes[offset + 1] << 16) + (bytes[offset + 2] << 8) + bytes[offset + 3]
+
+def nibbles(bytes, big_endian=False):
+  shift = [0,4] if not big_endian else [4,0]
+  for byte in bytes:
+    for s in shift:
+      yield (byte >> s) & 0x0F
 
 
 #-----------------------------------------------------------------------------
@@ -86,16 +92,14 @@ class OKI_ADPCM(object):
 
   def decode(data):
     decoded = bytearray()
-    signal = -2;
+    signal = -2
     step = 0
-    for byte in data:
-      for n in [0,4]:
-        nibble = (byte >> n) & 0x0F
-        signal += OKI_ADPCM.diff_lut[step * 16 + nibble]
-        signal = clip_int16(signal)
-        step += OKI_ADPCM.step_lut[nibble];
-        step = clip_int(step, OKI_ADPCM.step_min, OKI_ADPCM.step_max)
-        decoded.extend(struct.pack("<h", signal))
+    for nibble in nibbles(data, False):
+      signal += OKI_ADPCM.diff_lut[step * 16 + nibble]
+      signal = clip_int16(signal)
+      step += OKI_ADPCM.step_lut[nibble]
+      step = clip_int(step, OKI_ADPCM.step_min, OKI_ADPCM.step_max)
+      decoded.extend(struct.pack("<h", signal))
     return decoded
 
 
@@ -166,7 +170,7 @@ class PDX(object):
     pcm_offsets = []
     filesize = len(bytes)
     for i in range(96):
-      pcm_offset = (get_uint32(bytes, i * 8), get_uint32(bytes, 4 + (i * 8)))
+      pcm_offset = (get_uint32(bytes, i * 8, True), get_uint32(bytes, 4 + (i * 8), True))
       pcm_offsets.append(pcm_offset)
 
     # Get PCM data

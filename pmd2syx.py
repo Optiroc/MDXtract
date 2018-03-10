@@ -33,16 +33,15 @@ import struct
 import argparse
 import binascii
 from collections import namedtuple
-from functools import reduce
 
 #-----------------------------------------------------------------------------
 # Utility functions
 
-def get_uint16(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset] << 8) + bytes[offset + 1]
-  else:
+def get_uint16(bytes, offset, big_endian=False):
+  if not big_endian:
     return bytes[offset] + (bytes[offset + 1] << 8)
+  else:
+    return (bytes[offset] << 8) + bytes[offset + 1]
 
 # Remap n from range r1(min,max) to range r2(min,max)
 def remap(n, r1, r2):
@@ -355,7 +354,7 @@ class PMD(object):
     # 11  = Metadata
     data_offsets = []
     for i in range(12):
-      data_offsets.append(get_uint16(bytes, 2 + i * 2))
+      data_offsets.append(get_uint16(bytes, 2 + i * 2, True))
 
     # Voice data
     voice_len = 0x1A

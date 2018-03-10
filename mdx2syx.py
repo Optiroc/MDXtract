@@ -33,16 +33,15 @@ import struct
 import argparse
 import binascii
 from collections import namedtuple
-from functools import reduce
 
 #-----------------------------------------------------------------------------
 # Utility functions
 
-def get_uint16(bytes, offset, big_endian = True):
-  if big_endian is True:
-    return (bytes[offset] << 8) + bytes[offset + 1]
-  else:
+def get_uint16(bytes, offset, big_endian=False):
+  if not big_endian:
     return bytes[offset] + (bytes[offset + 1] << 8)
+  else:
+    return (bytes[offset] << 8) + bytes[offset + 1]
 
 # Remap n from range r1(min,max) to range r2(min,max)
 def remap(n, r1, r2):
@@ -358,10 +357,10 @@ class MDX(object):
 
     # Get channel count
     # (16 bit words before first MML chunk, -1 for the voice offset)
-    self.channels = (get_uint16(bytes, data_start + 2) >> 1) - 1
+    self.channels = (get_uint16(bytes, data_start + 2, True) >> 1) - 1
 
     # Get voice data
-    voice_blob = bytes[get_uint16(bytes, data_start) + data_start : len(bytes)]
+    voice_blob = bytes[get_uint16(bytes, data_start, True) + data_start : len(bytes)]
     voice_len = 0x1B
     voice_offset = 0
     while True:
@@ -376,8 +375,8 @@ class MDX(object):
     #   applied to voices and incorporate in voice definitions.
     mml_offsets = []
     for i in range(self.channels):
-      mml_offsets.append(get_uint16(bytes, data_start + 2 + (i * 2)) + data_start)
-    mml_offsets.append(get_uint16(bytes, data_start))
+      mml_offsets.append(get_uint16(bytes, data_start + 2 + (i * 2), True) + data_start)
+    mml_offsets.append(get_uint16(bytes, data_start, True))
 
     self.mml_data = []
     for i in range(self.channels):
