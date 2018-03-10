@@ -81,14 +81,14 @@ class OKI_ADPCM(object):
     diff_lut = [0] * (49 * 16)
     for step in range(49):
       stepval = int(math.floor(16.0 * pow(11.0 / 10.0, float(step))))
-      for nyb in range(16):
-        diff_lut[step * 16 + nyb] = bitmap[nyb][0] * (stepval * bitmap[nyb][1] + stepval // 2 * bitmap[nyb][2] + stepval // 4 * bitmap[nyb][3] + stepval // 8)
+      for n in range(16):
+        diff_lut[step * 16 + n] = bitmap[n][0] * (stepval * bitmap[n][1] + stepval // 2 * bitmap[n][2] + stepval // 4 * bitmap[n][3] + stepval // 8)
     return diff_lut
 
+  diff_lut = make_diff_lut()
   step_lut = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8]
   step_max = 48
   step_min = 0
-  diff_lut = make_diff_lut()
 
   def decode(data):
     decoded = bytearray()

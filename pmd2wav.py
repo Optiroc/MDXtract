@@ -125,14 +125,14 @@ class OKI_ADPCM(object):
     diff_lut = [0] * (49 * 16)
     for step in range(49):
       stepval = int(math.floor(16.0 * pow(11.0 / 10.0, float(step))))
-      for nyb in range(16):
-        diff_lut[step * 16 + nyb] = bitmap[nyb][0] * (stepval * bitmap[nyb][1] + stepval // 2 * bitmap[nyb][2] + stepval // 4 * bitmap[nyb][3] + stepval // 8)
+      for n in range(16):
+        diff_lut[step * 16 + n] = bitmap[n][0] * (stepval * bitmap[n][1] + stepval // 2 * bitmap[n][2] + stepval // 4 * bitmap[n][3] + stepval // 8)
     return diff_lut
 
+  diff_lut = make_diff_lut()
   step_lut = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8]
   step_max = 48
   step_min = 0
-  diff_lut = make_diff_lut()
 
   def decode(data):
     decoded = bytearray()
@@ -262,10 +262,8 @@ def extract_pps(data):
   for i,pcm_offset in enumerate(pcm_offsets):
     if pcm_offset[0] > 0 and (pcm_offset[1]) <= data_len and pcm_offset[1] - pcm_offset[0] > 0x20:
       decoded = bytearray()
-      for byte in data[pcm_offset[0] : pcm_offset[1] + 1]:
-        for n in [0,4]:
-          nibble = (byte >> n) & 0x0F
-          decoded.extend(struct.pack("b", clip_int8((nibble << 3) - 60)))
+      for nibble in nibbles(data[pcm_offset[0] : pcm_offset[1] + 1], False):
+        decoded.extend(struct.pack("b", clip_int8((nibble << 3) - 60)))
       pcm = bytearray(audioop.lin2lin(decoded, 1, 2))
       pcm_data.append((pcm, "{:03}".format(i)))
     else:
@@ -377,15 +375,15 @@ def extract_pcm(data, type=None, extension_type=None):
     else:
       type = extension_type
 
-  if type == "PPC":
+  if type is "PPC":
     return extract_ppc(data)
-  elif type == "PPS":
+  elif type is "PPS":
     return extract_pps(data)
-  elif type == "PVI":
+  elif type is "PVI":
     return extract_pvi(data)
-  elif type == "P86":
+  elif type is "P86":
     return extract_p86(data)
-  elif type == "P68":
+  elif type is "P68":
     return extract_p68(data)
   else:
     return bad_data()
