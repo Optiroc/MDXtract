@@ -1,15 +1,19 @@
 #!/usr/local/bin/python3
 
-# mdxtract
+# pmd2syx
 #
-# Utility to extract and convert instrument data from MDX files.
-# MDX is a binary MML representation used by MXDRV, a popular
-# sound driver for the Sharp X68000 computer. The YM2151 instrument
-# definitions are converted to DX7 compatible sysex, usable on many
-# popular software FM synthesizers as well as the original hardware.
+# Utility to extract and convert instrument data embedded in PMD
+# song files targeting the YM2608 and YM2151 sound chips. Common
+# file extensions are .M and .M2. These files are the binary MML
+# representation used by Professional Music Driver, a popular sound
+# driver for many Japanese computers in the 1990s.
+#
+# The Yamaha "4-OP" instrument definitions are converted to DX7
+# compatible sysex, usable on many popular software FM synthesizers
+# as well as the original hardware.
 #
 # Usage:
-# mdxtract.py [-h, --help] [-v, --verbose] [infiles ...]
+# pmd2syx.py [-h, --help] [-v, --verbose] [infiles ...]
 #
 # - Instrument data will be converted and written as <filename>.syx
 # - In verbose mode some intriguing data will be printed to stdout
@@ -17,10 +21,6 @@
 # Project home:
 #   https://github.com/Optiroc/MDXtract
 #
-# Further reading on MXDRV:
-#   https://www16.atwiki.jp/mxdrv/pages/23.html
-# Further reading on MDX:
-#   http://vgmrips.net/wiki/MDX
 # Yamaha "4-OP" to DX7 conversion tables and in-depth info:
 #   https://sites.google.com/site/yalaorg/audio-music-synthesis/fmsynth/fmsynthdx
 #
@@ -31,11 +31,18 @@ import sys
 import os
 import struct
 import argparse
+import binascii
 from collections import namedtuple
 from functools import reduce
 
 #-----------------------------------------------------------------------------
 # Utility functions
+
+def get_uint16(bytes, offset, big_endian = True):
+  if big_endian is True:
+    return (bytes[offset] << 8) + bytes[offset + 1]
+  else:
+    return bytes[offset] + (bytes[offset + 1] << 8)
 
 # Remap n from range r1(min,max) to range r2(min,max)
 def remap(n, r1, r2):
@@ -90,34 +97,34 @@ OPMOP = namedtuple("OPMOP", [
   "AME"    # Amp Mod Enable               (1 bits)
 ])
 
-# Make OPMOP from MDX voice definition
-def MDXVoice_to_OPMOP(op, mdxv):
+# Make OPMOP from PMD voice definition
+def PMDVoice_to_OPMOP(op, pmdv):
   return OPMOP(
-    TL  = (mdxv[0x07 + op]) & 0xFF,
-    AR  = (mdxv[0x0B + op]) & 0x1F,
-    D1R = (mdxv[0x0F + op]) & 0x1F,
-    D1L = (mdxv[0x17 + op] >> 4) & 0x0F,
-    D2R = (mdxv[0x13 + op]) & 0x1F,
-    RR  = (mdxv[0x17 + op]) & 0x0F,
-    KS  = (mdxv[0x0B + op] >> 6) & 0x03,
-    MUL = (mdxv[0x03 + op]) & 0x0F,
-    DT1 = (mdxv[0x03 + op] >> 4) & 0x07,
-    DT2 = (mdxv[0x13 + op] >> 6) & 0x03,
-    AME = (mdxv[0x0F + op] >> 7) & 0x01
+    TL  = (pmdv[0x05 + op]) & 0xFF,
+    AR  = (pmdv[0x09 + op]) & 0x1F,
+    D1R = (pmdv[0x0D + op]) & 0x1F,
+    D1L = (pmdv[0x15 + op] >> 4) & 0x0F,
+    D2R = (pmdv[0x11 + op]) & 0x1F,
+    RR  = (pmdv[0x15 + op]) & 0x0F,
+    KS  = (pmdv[0x09 + op] >> 6) & 0x03,
+    MUL = (pmdv[0x01 + op]) & 0x0F,
+    DT1 = (pmdv[0x01 + op] >> 4) & 0x07,
+    DT2 = (pmdv[0x11 + op] >> 6) & 0x03,
+    AME = (pmdv[0x0D + op] >> 7) & 0x01
   )
 
-# Make OPMVoice from MDX voice definition
-def MDXVoice_to_OPMVoice(name, mdxv):
+# Make OPMVoice from PMD voice definition
+def PMDVoice_to_OPMVoice(name, pmdv):
   return OPMVoice(
     name = name,
-    FL   = (mdxv[1] >> 3) & 0x07,
-    CON  = (mdxv[1]) & 0x07,
-    SLOT = (mdxv[2]) & 0xFF,
+    FL   = (pmdv[0x19] >> 3) & 0x07,
+    CON  = (pmdv[0x19]) & 0x07,
+    SLOT = 0x0F,
     NE   = 0, NFRQ=0, AMS=0, PMS=0, LFRQ=63, WF=2, PMD=63, AMD=63,
-    OPM1 = MDXVoice_to_OPMOP(0, mdxv),
-    OPM2 = MDXVoice_to_OPMOP(1, mdxv),
-    OPC1 = MDXVoice_to_OPMOP(2, mdxv),
-    OPC2 = MDXVoice_to_OPMOP(3, mdxv)
+    OPM1 = PMDVoice_to_OPMOP(0, pmdv),
+    OPM2 = PMDVoice_to_OPMOP(1, pmdv),
+    OPC1 = PMDVoice_to_OPMOP(2, pmdv),
+    OPC2 = PMDVoice_to_OPMOP(3, pmdv)
   )
 
 
@@ -326,58 +333,55 @@ def sysex_from_DX7Voices(dx7vs):
 
 
 #-----------------------------------------------------------------------------
-# MDX parser
+# PMD parser
 
-def get_uint16(bytes, offset):
-  return (bytes[offset] << 8) + bytes[offset + 1]
-
-class MDX(object):
+class PMD(object):
   def __init__(self, bytes):
-    self.title = None
-    self.pdxfile = None
-
-    # Assume MDX file if title terminator is found reasonably early
-    title_end = bytes.find(bytearray([0x0d, 0x0a]))
-    if title_end == -1 or title_end > 255:
-      return
-
-    # Get title string
-    self.title = bytes[0:title_end].decode('shiftjis')
-
-    # Get PDX file name
-    pdx_start = title_end + 3
-    data_start = pdx_start + 1
-    if bytes[pdx_start] != 0:
-      data_start = bytes.find(0x00, pdx_start) + 1
-      self.pdxfile = bytes[pdx_start:data_start - 1].decode('shiftjis')
-
-    # Get channel count
-    # (16 bit words before first MML chunk, -1 for the voice offset)
-    self.channels = (get_uint16(bytes, data_start + 2) >> 1) - 1
-
-    # Get voice data
-    voice_blob = bytes[get_uint16(bytes, data_start) + data_start : len(bytes)]
+    self.valid = False
     self.voice_data = []
-    voice_len = 0x1B
-    voice_offset = 0
+    self.meta_data = {}
+
+    # Assume not PMD file if not 0x1A at offset 1
+    # TODO: Check valid values for offset 0
+    if bytes[1] != 0x1A:
+      return
+    self.valid = True
+
+    # Data offsets
+    # 0-5 = FM MML data
+    # 6-8 = PSG MML data
+    # 9   = PCM MML data
+    # 10  = Rhythm data
+    # 11  = Metadata
+    data_offsets = []
+    for i in range(12):
+      data_offsets.append(get_uint16(bytes, 2 + i * 2))
+
+    # Voice data
+    voice_len = 0x1A
+    voice_offset = data_offsets[11] + 1
     while True:
-      if voice_offset + voice_len <= len(voice_blob):
-        self.voice_data.append(voice_blob[voice_offset : voice_offset + voice_len])
-        voice_offset += voice_len
-      else:
-        break
+      if voice_offset + voice_len > len(bytes): break
+      self.voice_data.append(bytes[voice_offset : voice_offset + voice_len])
+      voice_offset += voice_len
+      if voice_offset >= len(bytes): break
+      if bytes[voice_offset] == 0x00: break
 
-    # Get MML data
-    #   Unused for the moment, but it might be cool to extract LFO settings
-    #   applied to voices and incorporate in voice definitions.
-    mml_offsets = []
-    for i in range(self.channels):
-      mml_offsets.append(get_uint16(bytes, data_start + 2 + (i * 2)) + data_start)
-    mml_offsets.append(get_uint16(bytes, data_start))
+    # Metadata
+    meta_keys = ["ppz_file", "pps_file", "pcm_file", "title", "composer", "arranger", "memo1", "memo2"]
+    for k in meta_keys: self.meta_data[k] = None
 
-    self.mml_data = []
-    for i in range(self.channels):
-      self.mml_data.append(bytes[mml_offsets[i] : mml_offsets[i+1]])
+    meta_offset = voice_offset + 1
+    if meta_offset + 1 >= len(bytes) or bytes[meta_offset] != 0xFF: return # No metadata
+    meta_bin = bytes[meta_offset + 1 : len(bytes)].split(b'\0')
+
+    for i,b in enumerate(meta_bin):
+      try:
+        if i >= len(meta_keys): break
+        dec = b.decode("shiftjis")
+        if len(dec) > 0: self.meta_data[meta_keys[i]] = dec
+      except UnicodeDecodeError as err:
+        continue
 
 
 #-----------------------------------------------------------------------------
@@ -397,25 +401,43 @@ def main():
     first = True
     for path in arguments.infiles:
       with open(path, "rb") as infile:
-        basepath = os.path.abspath(os.path.join(os.path.dirname(path), os.path.splitext(os.path.basename(path))[0]))
+        basepath = os.path.abspath(os.path.join(os.path.dirname(path), os.path.basename(path)))
         basename = os.path.splitext(os.path.basename(path))[0]
 
-        # Parse MDX
-        mdx = MDX(bytearray(infile.read()))
+        # Parse PMD
+        pmd = PMD(bytearray(infile.read()))
+
+        if pmd.valid is False or len(pmd.voice_data) == 0:
+          if first is False: print()
+          first = False
+          print("File '{}' not recognized as PMD or contains no voice data".format(path))
+          continue
+
         if arguments.verbose:
           if first is False: print()
-          print("File:", path)
-          print("Title:", mdx.title)
-          print("Channels:", mdx.channels)
-          print("Voices:", len(mdx.voice_data))
-          print("PCM File:", mdx.pdxfile)
           first = False
+          print("File:    ", path)
+          print("Title:   ", pmd.meta_data["title"])
+          print("Composer:", pmd.meta_data["composer"])
+          print("Arranger:", pmd.meta_data["arranger"])
+          if pmd.meta_data["memo1"] is not None:
+            print("Notes:   ", pmd.meta_data["memo1"])
+            if pmd.meta_data["memo2"] is not None:
+              print("         ", pmd.meta_data["memo2"])
+          if pmd.meta_data["pcm_file"] is not None: print("PCM File:", pmd.meta_data["pcm_file"])
+          if pmd.meta_data["ppz_file"] is not None: print("PPZ File:", pmd.meta_data["ppz_file"])
+          if pmd.meta_data["pps_file"] is not None: print("PPS File:", pmd.meta_data["pps_file"])
+          print("Voices:  ", len(pmd.voice_data))
 
         # Make OPMVoice list
         opmvoices = []
-        for i, vd in enumerate(mdx.voice_data):
-          vn = basename[:7] + "_{:02X}".format(i)
-          opmvoices.append(MDXVoice_to_OPMVoice(vn, vd))
+        for vd in pmd.voice_data:
+          voice_id = vd[0]
+          if arguments.verbose:
+            print("Voice {:02X}: {}".format(voice_id, binascii.hexlify(vd).decode()))
+          vn = basename[:7] + "_{:02X}".format(voice_id)
+          opmvoices.append(PMDVoice_to_OPMVoice(vn, vd))
+
 
         # Make DX7Voice lists and render sysex (max 32 entries per batch allowed)
         batch_size = 32
