@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python3
 
 # pmd2wav
 #
@@ -64,27 +64,27 @@ def clip_int16(value):
 def clip_int8(value):
   return int(max(-128, min(value, 127)))
 
-def get_uint16(bytes, offset, big_endian=False):
+def get_uint16(data, offset, big_endian=False):
   if not big_endian:
-    return bytes[offset] + (bytes[offset + 1] << 8)
+    return data[offset] + (data[offset + 1] << 8)
   else:
-    return (bytes[offset] << 8) + bytes[offset + 1]
+    return (data[offset] << 8) + data[offset + 1]
 
-def get_uint24(bytes, offset, big_endian=False):
+def get_uint24(data, offset, big_endian=False):
   if not big_endian:
-    return (bytes[offset + 2] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 0]
+    return (data[offset + 2] << 16) + (data[offset + 1] << 8) + data[offset + 0]
   else:
-    return (bytes[offset + 0] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 2]
+    return (data[offset + 0] << 16) + (data[offset + 1] << 8) + data[offset + 2]
 
-def get_uint32(bytes, offset, big_endian=False):
+def get_uint32(data, offset, big_endian=False):
   if not big_endian:
-    return (bytes[offset + 3] << 24) + (bytes[offset + 2] << 16) + (bytes[offset + 1] << 8) + bytes[offset + 0]
+    return (data[offset + 3] << 24) + (data[offset + 2] << 16) + (data[offset + 1] << 8) + data[offset + 0]
   else:
-    return (bytes[offset + 0] << 24) + (bytes[offset + 1] << 16) + (bytes[offset + 2] << 8) + bytes[offset + 3]
+    return (data[offset + 0] << 24) + (data[offset + 1] << 16) + (data[offset + 2] << 8) + data[offset + 3]
 
-def nibbles(bytes, big_endian=False):
+def nibbles(data, big_endian=False):
   shift = [0,4] if not big_endian else [4,0]
-  for byte in bytes:
+  for byte in data:
     for s in shift:
       yield (byte >> s) & 0x0F
 
@@ -117,10 +117,10 @@ class YM_ADPCM(object):
 class OKI_ADPCM(object):
   def make_diff_lut():
     bitmap = [
-      [ 1, 0, 0, 0], [ 1, 0, 0, 1], [ 1, 0, 1, 0], [ 1, 0, 1, 1],
-      [ 1, 1, 0, 0], [ 1, 1, 0, 1], [ 1, 1, 1, 0], [ 1, 1, 1, 1],
-      [-1, 0, 0, 0], [-1, 0, 0, 1], [-1, 0, 1, 0], [-1, 0, 1, 1],
-      [-1, 1, 0, 0], [-1, 1, 0, 1], [-1, 1, 1, 0], [-1, 1, 1, 1]
+        [ 1, 0, 0, 0], [ 1, 0, 0, 1], [ 1, 0, 1, 0], [ 1, 0, 1, 1],
+        [ 1, 1, 0, 0], [ 1, 1, 0, 1], [ 1, 1, 1, 0], [ 1, 1, 1, 1],
+        [-1, 0, 0, 0], [-1, 0, 0, 1], [-1, 0, 1, 0], [-1, 0, 1, 1],
+        [-1, 1, 0, 0], [-1, 1, 0, 1], [-1, 1, 1, 0], [-1, 1, 1, 1]
     ]
     diff_lut = [0] * (49 * 16)
     for step in range(49):
@@ -193,10 +193,10 @@ def pcm_adjust(pcm, gain = 1, fix_dc_offset = True):
 
   dc_bias = 0
   if fix_dc_offset is True:
-    sum = 0
+    summ = 0
     for i in range(len(pcm) // 2):
-      sum += struct.unpack("<h", pcm[i * 2 : i * 2 + 2])[0]
-    dc_bias = sum // (len(pcm) // 2)
+      summ += struct.unpack("<h", pcm[i * 2 : i * 2 + 2])[0]
+    dc_bias = summ // (len(pcm) // 2)
 
   adjusted = bytearray()
   for i in range(len(pcm) // 2):
@@ -360,30 +360,30 @@ def extract_p68(data):
 #-----------------------------------------------------------------------------
 # PMD PCM extraction
 
-def extract_pcm(data, type=None, extension_type=None):
-  if type is None:
+def extract_pcm(data, datatype=None, extension_type=None):
+  if datatype is None:
     ppc_header = bytearray(b'ADPCM DATA for  PMD ver.4.4-  ')
     pvi_header = bytearray(b'PVI2')
     p86_header = bytearray(b'PCM86 DATA')
 
     if data[0 : len(ppc_header)] == ppc_header:
-      type = "PPC"
+      datatype = "PPC"
     elif data[0 : len(pvi_header)] == pvi_header:
-      type = "PVI"
+      datatype = "PVI"
     elif data[0 : len(p86_header)] == p86_header:
-      type = "P86"
+      datatype = "P86"
     else:
-      type = extension_type
+      datatype = extension_type
 
-  if type is "PPC":
+  if datatype is "PPC":
     return extract_ppc(data)
-  elif type is "PPS":
+  elif datatype is "PPS":
     return extract_pps(data)
-  elif type is "PVI":
+  elif datatype is "PVI":
     return extract_pvi(data)
-  elif type is "P86":
+  elif datatype is "P86":
     return extract_p86(data)
-  elif type is "P68":
+  elif datatype is "P68":
     return extract_p68(data)
   else:
     return bad_data()
@@ -421,31 +421,31 @@ def main():
 
   try:
     arguments = parser.parse_args()
-    if len(arguments.infiles) == 0:
+    if not arguments.infiles:
       parser.print_help()
-      sys.exit(0)
+      return 0
 
     first = True
     for path in arguments.infiles:
       with open(path, "rb") as infile:
 
         ext_type = str2type(os.path.splitext(os.path.basename(path))[1])
-        type, pcm_data = extract_pcm(bytearray(infile.read()), arguments.type, ext_type)
+        datatype, pcm_data = extract_pcm(bytearray(infile.read()), arguments.type, ext_type)
 
-        if type is None or len(pcm_data) == 0:
-          if first is False: print()
+        if datatype is None or not pcm_data:
+          if not first: print()
           first = False
           print("File '{}' not of recognized type or contains no sample data".format(path))
           continue
 
         if arguments.verbose:
-          if first is False: print()
+          if not first: print()
           print("File:", path)
-          print("Type:", type)
+          print("Type:", datatype)
           first = False
 
         gain = arguments.gain
-        if type == "P68": gain *= 16.0
+        if datatype == "P68": gain *= 16.0
 
         basepath = os.path.abspath(os.path.join(os.path.dirname(path), os.path.basename(path)))
         files_written = 0
@@ -460,8 +460,10 @@ def main():
         if arguments.verbose:
           print("{} samples extracted".format(files_written))
 
+    return 0
+
   except IOError as err:
     print("{}".format(err))
 
 if __name__ == "__main__":
-    main()
+  sys.exit(main())
