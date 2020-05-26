@@ -37,7 +37,7 @@ pmd2wav.py [-h] [-v] --type [type] [--rate R] [--gain G] [--dcnorm] [infiles ...
 ```
  - Common PMD sample archive extensions include .PPC, .P86 and .PPS.
  - It is usually not needed to specify `type`. When omitted the tool will auto detect the format by looking at the file header, and if nothing can be deduced from that it falls back to the file extension. 
- - AD/PCM data will be converted and written as `<filename>_<n>.wav`.
+ - ADPCM data will be converted and written as `<filename>_<n>.wav`.
  - Default sample rate is 15625 Hz, not a common setting on PC-9801!
  - In verbose mode something will be printed to stdout.
 
