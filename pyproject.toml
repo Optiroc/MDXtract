@@ -5,4 +5,5 @@ description = "MDXtract is a set of python tools for extracting instrument and s
 readme = "README.md"
 requires-python = ">=3.12,<=3.14"
 dependencies = [
+    "audioop-lts; python_version >= '3.13'",
 ]
